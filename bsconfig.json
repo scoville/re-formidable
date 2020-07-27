@@ -1,0 +1,43 @@
+{
+  "name": "formidable",
+  "reason": {
+    "react-jsx": 3
+  },
+  "sources": [
+    {
+      "dir": "src",
+      "subdirs": true
+    },
+    {
+      "dir": "tests",
+      "subdirs": true,
+      "type": "dev"
+    },
+    {
+      "dir": "example",
+      "subdirs": true,
+      "type": "dev"
+    }
+  ],
+  "warnings": {
+    "number": "-48",
+    "error": "+A+8+11+12+16+26+27+31+32+33+34+35+39+44+45+101+102+104+105"
+  },
+  "bsc-flags": ["-bs-super-errors", "-bs-no-version-header"],
+  "ppx-flags": ["bs-optic/lenses-ppx"],
+  "package-specs": [
+    {
+      "module": "commonjs",
+      "in-source": true
+    }
+  ],
+  "suffix": ".bs.js",
+  "namespace": false,
+  "bs-dependencies": ["bs-bastet", "bs-optic", "reason-react", "relude"],
+  "bs-dev-dependencies": [
+    "@glennsl/bs-jest",
+    "bs-react-testing-library",
+    "bs-webapi"
+  ],
+  "refmt": 3
+}

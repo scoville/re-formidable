@@ -1,0 +1,205 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Formidable Component renders 1`] = `
+<div>
+  Email address' length: 0
+  <form>
+    <div>
+      Email address: 
+    </div>
+    <div>
+      Form
+    </div>
+    <div>
+      <div>
+        Email
+      </div>
+      <input
+        data-testid="email"
+        name="email"
+        value=""
+      />
+      <div>
+        Blur
+      </div>
+      <div>
+        Field is pristine
+      </div>
+    </div>
+    <div>
+      <div>
+        Password
+        <span
+          style="color: red;"
+        >
+          *
+        </span>
+      </div>
+      <input
+        data-testid="password"
+        name="password"
+        value=""
+      />
+      <div>
+        Blur
+      </div>
+      <div>
+        Field is pristine
+      </div>
+    </div>
+    <div>
+      <div>
+        Password confirm
+      </div>
+      <input
+        data-testid="password-confirm"
+        name="password-confirm"
+        value=""
+      />
+      <div>
+        Blur
+      </div>
+      <div>
+        Field is pristine
+      </div>
+    </div>
+    <div>
+      <div>
+        Name
+        <span
+          style="color: red;"
+        >
+          *
+        </span>
+      </div>
+      <input
+        data-testid="name"
+        name="name"
+        value=""
+      />
+      <div>
+        Blur
+      </div>
+      <div>
+        Field is pristine
+      </div>
+    </div>
+    <div>
+      <div>
+        Age
+      </div>
+      <input
+        data-testid="age"
+        name="age"
+        value=""
+      />
+      <div>
+        Blur
+      </div>
+      <div>
+        Field is pristine
+      </div>
+    </div>
+    <button
+      data-testid="submit"
+      type="submit"
+    >
+      Submit
+    </button>
+    <button
+      data-testid="reset"
+      type="button"
+    >
+      Reset
+    </button>
+  </form>
+</div>
+`;
+
+exports[`Formidable Field (example: email) Change focus status - focus 1`] = `
+Object {
+  "focusState": "Focus",
+  "status": "Field is touched",
+  "value": "",
+}
+`;
+
+exports[`Formidable Field (example: email) Change focus status and trigger required error - focus then blur 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Field has errors: Email/required",
+  "value": "",
+}
+`;
+
+exports[`Formidable Field (example: email) Email format error 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Field has errors: Email/email",
+  "value": "foobar.com",
+}
+`;
+
+exports[`Formidable Field (example: email) On blur listener - no event 1`] = `Array []`;
+
+exports[`Formidable Field (example: email) On blur listener - no listener 1`] = `Array []`;
+
+exports[`Formidable Field (example: email) On blur listener - wrong event 1`] = `Array []`;
+
+exports[`Formidable Field (example: email) On blur listener 1`] = `
+Array [
+  "blurred",
+]
+`;
+
+exports[`Formidable Field (example: email) On change listener 1`] = `
+Array [
+  "changed: foo@",
+  "changed: bar.",
+  "changed: com",
+]
+`;
+
+exports[`Formidable Field (example: email) On focus listener - no event 1`] = `Array []`;
+
+exports[`Formidable Field (example: email) On focus listener - no listener 1`] = `Array []`;
+
+exports[`Formidable Field (example: email) On focus listener - wrong event 1`] = `Array []`;
+
+exports[`Formidable Field (example: email) On focus listener 1`] = `
+Array [
+  "focused",
+]
+`;
+
+exports[`Formidable Field (example: email) Pristine status 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Field is pristine",
+  "value": "",
+}
+`;
+
+exports[`Formidable Field (example: email) Submit and reset 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Field is pristine",
+  "value": "",
+}
+`;
+
+exports[`Formidable Field (example: email) Submit errors 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Field has errors: Email/required",
+  "value": "",
+}
+`;
+
+exports[`Formidable Field (example: email) Updates value 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Field is valid",
+  "value": "foo@bar.com",
+}
+`;

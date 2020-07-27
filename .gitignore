@@ -1,0 +1,10 @@
+.DS_Store
+.merlin
+.bsb.lock
+.vscode
+npm-debug.log
+**/*.bs.js
+/lib/
+/node_modules/
+/bundleOutput/
+yarn-error.log
