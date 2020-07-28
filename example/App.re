@@ -23,7 +23,8 @@ module Values = {
 
 // It's pretty easy to have a generic form maker
 // for when a the same value set and errors are used in different context
-let makeForm = Formidable.make((module Values), (module I18n.Error));
+let makeForm =
+  Formidable.make(~values=(module Values), ~error=(module I18n.Error));
 
 // In this example, we'll use the hook contained in the module so we need to define it at the top level
 // In many cases, it's not needed, especially thanks to the Consumer component

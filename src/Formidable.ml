@@ -502,9 +502,10 @@ end
 type ('values, 'error) t =
   (module Form with type error = 'error and type values = 'values)
 
-let make (type values error) (module Values : Values with type t = values)
-    (module Error : Type with type t = error) ~onSubmit ?onSubmitError () :
-    (Values.t, Error.t) t =
+let make (type values error)
+    ~values:(module Values : Values with type t = values)
+    ~error:(module Error : Type with type t = error) ~onSubmit ?onSubmitError ()
+    : (Values.t, Error.t) t =
   let module Handlers = struct
     type error = Error.t
 
