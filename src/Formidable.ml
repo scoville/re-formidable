@@ -67,14 +67,14 @@ end
 
 module Props = struct
   module Field = struct
-    type ('value, 'error) childrenProps = {
+    type ('value, 'error) t = {
       isDisabled : bool;
       isFocused : bool;
       label : string option;
       name : string;
-      onBlur : unit -> unit;
+      onBlur : ReactEvent.Focus.t -> unit;
       onChange : 'value -> unit;
-      onFocus : unit -> unit;
+      onFocus : ReactEvent.Focus.t -> unit;
       setStatus : 'error States.Field.Status.t -> unit;
       status : 'error States.Field.Status.t;
       validate : unit -> unit;
@@ -121,16 +121,7 @@ module type Form = sig
 
   type error
 
-  module Consumer : sig
-    type children = (values, error) Context.state -> React.element
-
-    external makeProps :
-      children:children -> ?key:string -> unit -> < children : children > Js.t
-      = ""
-      [@@bs.obj]
-
-    val make : < children : children > Js.t React.component
-  end
+  val use : unit -> (values, error) Hook.t
 
   module Provider : sig
     external makeProps :
@@ -143,9 +134,19 @@ module type Form = sig
     val make : < children : React.element > Js.t React.component
   end
 
+  module Consumer : sig
+    type children = (values, error) Hook.t -> React.element
+
+    external makeProps :
+      children:children -> ?key:string -> unit -> < children : children > Js.t
+      = ""
+      [@@bs.obj]
+
+    val make : < children : children > Js.t React.component
+  end
+
   module Field : sig
-    type 'value children =
-      ('value, error) Props.Field.childrenProps -> React.element
+    type 'value children = ('value, error) Props.Field.t -> React.element
 
     external makeProps :
       name:string ->
@@ -153,9 +154,9 @@ module type Form = sig
       children:'value children ->
       ?label:string ->
       ?errorLabel:string ->
-      ?onBlur:(unit -> unit) ->
+      ?onBlur:(ReactEvent.Focus.t -> unit) ->
       ?onChange:('value -> unit) ->
-      ?onFocus:(unit -> unit) ->
+      ?onFocus:(ReactEvent.Focus.t -> unit) ->
       ?validations:(values, 'value, error) Validations.t list ->
       ?disable:bool ->
       ?key:string ->
@@ -165,9 +166,9 @@ module type Form = sig
       ; children : 'value children
       ; label : string option
       ; errorLabel : string option
-      ; onBlur : (unit -> unit) option
+      ; onBlur : (ReactEvent.Focus.t -> unit) option
       ; onChange : ('value -> unit) option
-      ; onFocus : (unit -> unit) option
+      ; onFocus : (ReactEvent.Focus.t -> unit) option
       ; validations : (values, 'value, error) Validations.t list option
       ; disable : bool option >
       Js.t = ""
@@ -179,16 +180,14 @@ module type Form = sig
       ; children : 'value children
       ; label : string option
       ; errorLabel : string option
-      ; onBlur : (unit -> unit) option
+      ; onBlur : (ReactEvent.Focus.t -> unit) option
       ; onChange : ('value -> unit) option
-      ; onFocus : (unit -> unit) option
+      ; onFocus : (ReactEvent.Focus.t -> unit) option
       ; validations : (values, 'value, error) Validations.t list option
       ; disable : bool option >
       Js.t
       React.component
   end
-
-  val use : unit -> (values, error) Hook.t
 
   external makeProps :
     ?preventDefault:bool ->
@@ -241,20 +240,36 @@ module Make
           updateField = (fun _ _ -> ());
         } )
 
-  module Consumer = struct
-    type children = (values, error) Context.state -> React.element
+  let use () =
+    let ({ Context.fields; values } as state), { Context.setFields; setValues }
+        =
+      React.useContext context
+    in
 
-    external makeProps :
-      children:children -> ?key:string -> unit -> < children : children > Js.t
-      = ""
-      [@@bs.obj]
+    let reset () =
+      setFields (States.reset fields);
+      setValues Values.init
+    in
 
-    let make props =
-      let state, _ = React.useContext context in
-      let children : children = props##children in
+    let setValues f = setValues (f values) in
 
-      children state
-  end
+    let submit () =
+      let fields =
+        StringMap.map
+          (fun ({ States.Field.validate } as field) ->
+            { field with status = validate None values })
+          fields
+      in
+
+      ( match (Handlers.onSubmitError, States.getErrors fields) with
+      | _, [] -> Handlers.onSubmit values
+      | Some onSubmitError, errors -> onSubmitError values errors
+      | None, _ -> () );
+
+      setFields fields
+    in
+
+    { Hook.reset; setValues; state; submit }
 
   module Provider = struct
     external makeProps :
@@ -299,9 +314,23 @@ module Make
         [%bs.obj { children = props##children; value = (state, modifiers) }]
   end
 
+  module Consumer = struct
+    type children = (values, error) Hook.t -> React.element
+
+    external makeProps :
+      children:children -> ?key:string -> unit -> < children : children > Js.t
+      = ""
+      [@@bs.obj]
+
+    let make props =
+      let hook = use () in
+      let children : children = props##children in
+
+      children hook
+  end
+
   module Field = struct
-    type 'value children =
-      ('value, error) Props.Field.childrenProps -> React.element
+    type 'value children = ('value, error) Props.Field.t -> React.element
 
     external makeProps :
       name:string ->
@@ -309,9 +338,9 @@ module Make
       children:'value children ->
       ?label:string ->
       ?errorLabel:string ->
-      ?onBlur:(unit -> unit) ->
+      ?onBlur:(ReactEvent.Focus.t -> unit) ->
       ?onChange:('value -> unit) ->
-      ?onFocus:(unit -> unit) ->
+      ?onFocus:(ReactEvent.Focus.t -> unit) ->
       ?validations:(values, 'value, error) Validations.t list ->
       ?disable:bool ->
       ?key:string ->
@@ -321,9 +350,9 @@ module Make
       ; children : 'value children
       ; label : string option
       ; errorLabel : string option
-      ; onBlur : (unit -> unit) option
+      ; onBlur : (ReactEvent.Focus.t -> unit) option
       ; onChange : ('value -> unit) option
-      ; onFocus : (unit -> unit) option
+      ; onFocus : (ReactEvent.Focus.t -> unit) option
       ; validations : (values, 'value, error) Validations.t list option
       ; disable : bool option >
       Js.t = ""
@@ -376,22 +405,18 @@ module Make
             { field with status = validate validationContext values })
       in
 
-      let onBlur () =
-        let onBlur' = props##onBlur in
-
+      let onBlur event =
         setIsFocused (const false);
 
-        Option.forEach (( |> ) ()) onBlur';
+        Option.forEach (( |> ) event) props##onBlur;
 
         validateAndUpdate (Some `onBlur) values
       in
 
-      let onFocus () =
-        let onFocus' = props##onFocus in
-
+      let onFocus event =
         setIsFocused (const true);
 
-        Option.forEach (( |> ) ()) onFocus';
+        Option.forEach (( |> ) event) props##onFocus;
 
         if Option.fold false States.Field.isPristine field then
           modifiers.updateField props##name (fun field ->
@@ -437,37 +462,6 @@ module Make
         }
   end
 
-  let use () =
-    let ({ Context.fields; values } as state), { Context.setFields; setValues }
-        =
-      React.useContext context
-    in
-
-    let reset () =
-      setFields (States.reset fields);
-      setValues Values.init
-    in
-
-    let setValues f = setValues (f values) in
-
-    let submit () =
-      let fields =
-        StringMap.map
-          (fun ({ States.Field.validate } as field) ->
-            { field with status = validate None values })
-          fields
-      in
-
-      ( match (Handlers.onSubmitError, States.getErrors fields) with
-      | _, [] -> Handlers.onSubmit values
-      | Some onSubmitError, errors -> onSubmitError values errors
-      | None, _ -> () );
-
-      setFields fields
-    in
-
-    { Hook.reset; setValues; state; submit }
-
   external makeProps :
     ?preventDefault:bool ->
     ?stopPropagation:bool ->
@@ -505,9 +499,12 @@ module Make
       [| props##children |]
 end
 
+type ('values, 'error) t =
+  (module Form with type error = 'error and type values = 'values)
+
 let make (type values error) (module Values : Values with type t = values)
     (module Error : Type with type t = error) ~onSubmit ?onSubmitError () :
-    (module Form with type values = Values.t and type error = Error.t) =
+    (Values.t, Error.t) t =
   let module Handlers = struct
     type error = Error.t
 

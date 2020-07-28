@@ -28,8 +28,12 @@ module Validator = struct
     ('values, 'value, 'error) Args.t -> ('value, 'error) Value.t
 end
 
-type ('values, 'value, 'error) t =
-  Strategy.t * (string * ('values, 'value, 'error) Validator.t)
+module Pair = struct
+  type ('values, 'value, 'error) t =
+    string * ('values, 'value, 'error) Validator.t
+end
+
+type ('values, 'value, 'error) t = Strategy.t * ('values, 'value, 'error) Pair.t
 
 let compose (name, validator) (name', validator') =
   ( name ^ "<or>" ^ name',

@@ -118,7 +118,7 @@ module Child = {
 let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
   <Form.Provider>
     <Form.Consumer>
-      {({values}) =>
+      {({state: {values}}) =>
          (
            "Email address' length: "
            ++ String.fromInt(String.length(values.email))

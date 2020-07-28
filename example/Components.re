@@ -78,9 +78,9 @@ module TextInput = {
           <input
             disabled=isDisabled
             name
-            onBlur={Formidable.Events.handle'(onBlur)}
+            onBlur
             onChange={Formidable.Events.handle(onChange)}
-            onFocus={Formidable.Events.handle'(onFocus)}
+            onFocus
             value
           />
         </Test>
