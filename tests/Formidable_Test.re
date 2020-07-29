@@ -88,6 +88,22 @@ describe("Formidable", () => {
       email.expectToMatchSnapshot(app);
     });
 
+    test("Submit with errors", () => {
+      let app = renderApp();
+
+      app
+      |> email.input
+      |> FireEvent.input(~eventInit={
+                           "target": {
+                             "value": wrongEmail,
+                           },
+                         });
+
+      app |> submitButton |> FireEvent.click;
+
+      email.expectToMatchSnapshot(app);
+    });
+
     test("On focus listener - no listener", () => {
       let (spy, _) = Handler.make(const("focused"));
 
