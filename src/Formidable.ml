@@ -505,7 +505,7 @@ type ('values, 'error) t =
 let make (type values error)
     ~values:(module Values : Values with type t = values)
     ~error:(module Error : Type with type t = error) ~onSubmit ?onSubmitError ()
-    : (Values.t, Error.t) t =
+    : (values, error) t =
   let module Handlers = struct
     type error = Error.t
 
@@ -516,3 +516,6 @@ let make (type values error)
     let onSubmitError = onSubmitError
   end in
   (module Make (Values) (Error) (Handlers))
+
+let use ~values ~error ~onSubmit ?onSubmitError () =
+  React.useMemo0 (fun () -> make ~values ~error ~onSubmit ?onSubmitError ())

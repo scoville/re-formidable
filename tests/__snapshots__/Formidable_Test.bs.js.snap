@@ -196,6 +196,14 @@ Object {
 }
 `;
 
+exports[`Formidable Field (example: email) Submit with errors 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Field has errors: Email/email",
+  "value": "foobar.com",
+}
+`;
+
 exports[`Formidable Field (example: email) Updates value 1`] = `
 Object {
   "focusState": "Blur",
