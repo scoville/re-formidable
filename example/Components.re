@@ -71,7 +71,7 @@ module TextInput = {
       ) =>
       <div>
         <Label
-          required={validationNames |> List.containsBy((==), "required")}
+          required={validationNames |> FormidableValidations.has("required")}
           value=label
         />
         <Test id=name>

@@ -367,7 +367,7 @@ module Make
       let value = Optic.Lens.view props##lens values in
       let isFocused, setIsFocused = React.useState (fun () -> false) in
       let validationNames =
-        Option.fold [] (List.map Validations.getName) props##validations
+        Option.fold []  (List.flatMap (Validations.getName >> Relude.String.splitAsList ~delimiter:"<or>")) props##validations
       in
 
       let validate =
