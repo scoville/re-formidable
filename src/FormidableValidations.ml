@@ -1,5 +1,3 @@
-open Relude.Globals
-
 (** Strategy used during validation, on change, on blur, or on demand.
   * On demand validation will not be triggered automatically, and you need
   * to use the validate function manually.
@@ -62,5 +60,3 @@ let shouldValidate ~context ~strategy =
   | Some `onBlur, `onBlur ->
       true
   | _ -> false
-
-let has name validations = validations |> List.containsBy (==) name 

@@ -65,15 +65,12 @@ module TextInput = {
           onChange,
           onFocus,
           status,
-          validationNames,
+          hasValidation,
           value,
         },
       ) =>
       <div>
-        <Label
-          required={validationNames |> FormidableValidations.has("required")}
-          value=label
-        />
+        <Label required={hasValidation("required")} value=label />
         <Test id=name>
           <input
             disabled=isDisabled
