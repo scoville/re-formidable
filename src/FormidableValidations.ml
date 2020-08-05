@@ -30,13 +30,13 @@ end
 
 module Pair = struct
   type ('values, 'value, 'error) t =
-    string * ('values, 'value, 'error) Validator.t
+    string list * ('values, 'value, 'error) Validator.t
 end
 
 type ('values, 'value, 'error) t = Strategy.t * ('values, 'value, 'error) Pair.t
 
 let compose (name, validator) (name', validator') =
-  ( name ^ "<or>" ^ name',
+  ( name @ name',
     fun field ->
       match validator field with
       | `ok _ -> validator' field

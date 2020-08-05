@@ -368,12 +368,10 @@ module Make
       let isFocused, setIsFocused = React.useState (fun () -> false) in
 
       let validationNames =
-        Option.fold []  (List.flatMap (Validations.getName >> Relude.String.splitAsList ~delimiter:"<or>")) props##validations
+        props##validations |> Option.fold [] (List.flatMap Validations.getName)
       in
 
-      let hasValidation name =
-        validationNames |> List.containsBy (==) name
-      in
+      let hasValidation name = List.containsBy ( == ) name validationNames in
 
       let validate =
         React.useCallback1
