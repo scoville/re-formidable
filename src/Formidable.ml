@@ -116,6 +116,12 @@ module Hook = struct
   }
 end
 
+module FormMethod = struct
+  type t = [ `get | `post ]
+
+  let toString : t -> string = function `get -> "GET" | `post -> "POST"
+end
+
 module type Form = sig
   type values
 
@@ -190,6 +196,8 @@ module type Form = sig
   end
 
   external makeProps :
+    ?action:string ->
+    ?method_:FormMethod.t ->
     ?preventDefault:bool ->
     ?stopPropagation:bool ->
     ?className:string ->
@@ -197,7 +205,9 @@ module type Form = sig
     children:React.element ->
     ?key:string ->
     unit ->
-    < preventDefault : bool option
+    < action : string option
+    ; method_ : FormMethod.t option
+    ; preventDefault : bool option
     ; stopPropagation : bool option
     ; className : string option
     ; disable : bool option
@@ -206,7 +216,9 @@ module type Form = sig
     [@@bs.obj]
 
   val make :
-    < preventDefault : bool option
+    < action : string option
+    ; method_ : FormMethod.t option
+    ; preventDefault : bool option
     ; stopPropagation : bool option
     ; className : string option
     ; disable : bool option
@@ -466,6 +478,8 @@ module Make
   end
 
   external makeProps :
+    ?action:string ->
+    ?method_:FormMethod.t ->
     ?preventDefault:bool ->
     ?stopPropagation:bool ->
     ?className:string ->
@@ -473,7 +487,9 @@ module Make
     children:React.element ->
     ?key:string ->
     unit ->
-    < preventDefault : bool option
+    < action : string option
+    ; method_ : FormMethod.t option
+    ; preventDefault : bool option
     ; stopPropagation : bool option
     ; className : string option
     ; disable : bool option
@@ -494,11 +510,18 @@ module Make
 
     ReactDOMRe.createElement "form"
       ~props:
-        (ReactDOMRe.props ?className:props##className
-           ~onSubmit:
-             (Events.handle' ?preventDefault:props##preventDefault
-                ?stopPropagation:props##stopPropagation submit)
-           ())
+        (* The ReactDOM.props function accepts only a `method` argument
+           which doesn't compile, hence the following hack *)
+        (Obj.magic
+           [%bs.obj
+             {
+               className = props##className;
+               action = props##action;
+               _method = Option.map FormMethod.toString props##method_;
+               onSubmit =
+                 Events.handle' ?preventDefault:props##preventDefault
+                   ?stopPropagation:props##stopPropagation submit;
+             }])
       [| props##children |]
 end
 
