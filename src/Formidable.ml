@@ -78,7 +78,7 @@ module Props = struct
       setStatus : 'error States.Field.Status.t -> unit;
       status : 'error States.Field.Status.t;
       validate : unit -> unit;
-      validationNames : string list;
+      hasValidation : string -> bool;
       value : 'value;
     }
   end
@@ -366,9 +366,12 @@ module Make
       let children = props##children in
       let value = Optic.Lens.view props##lens values in
       let isFocused, setIsFocused = React.useState (fun () -> false) in
+
       let validationNames =
-        Option.fold [] (List.map Validations.getName) props##validations
+        props##validations |> Option.fold [] (List.flatMap Validations.getName)
       in
+
+      let hasValidation name = List.containsBy ( == ) name validationNames in
 
       let validate =
         React.useCallback1
@@ -457,7 +460,7 @@ module Make
           setStatus;
           status = Option.fold `pristine States.Field.status field;
           validate = (fun () -> validateAndUpdate None values);
-          validationNames;
+          hasValidation;
           value;
         }
   end
