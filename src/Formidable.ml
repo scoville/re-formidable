@@ -545,3 +545,8 @@ let make (type values error)
 
 let use ~values ~error ~onSubmit ?onSubmitError () =
   React.useMemo0 (fun () -> make ~values ~error ~onSubmit ?onSubmitError ())
+
+let use1 ~values ~error ~onSubmit ?onSubmitError busters =
+  React.useMemo1
+    (fun () -> make ~values ~error ~onSubmit ?onSubmitError ())
+    busters
