@@ -375,8 +375,8 @@ module Make
         React.useContext context
       in
       let field = StringMap.get props##name fields in
-      let children = props##children in
       let value = Optic.Lens.view props##lens values in
+      let children = React.useCallback1 props##children [| value |] in
       let isFocused, setIsFocused = React.useState (fun () -> false) in
 
       let validationNames =
@@ -546,7 +546,5 @@ let make (type values error)
 let use ~values ~error ~onSubmit ?onSubmitError () =
   React.useMemo0 (fun () -> make ~values ~error ~onSubmit ?onSubmitError ())
 
-let use1 ~values ~error ~onSubmit ?onSubmitError busters =
-  React.useMemo1
-    (fun () -> make ~values ~error ~onSubmit ?onSubmitError ())
-    busters
+let use1 ~values ~error ~onSubmit ?onSubmitError =
+  React.useMemo1 (fun () -> make ~values ~error ~onSubmit ?onSubmitError ())
