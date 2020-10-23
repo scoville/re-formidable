@@ -17,7 +17,7 @@ module type Handlers = sig
 
   type error
 
-  val onSubmit : values -> unit
+  val onSubmit : (values -> unit) option
 
   val onSubmitError : (values -> error list -> unit) option
 end
@@ -112,7 +112,9 @@ module Hook = struct
     reset : unit -> unit;
     setValues : ('values -> 'values) -> unit;
     state : ('values, 'error) Context.state;
-    submit : unit -> unit;
+    submit :
+      unit ->
+      ('values, 'error) States.Field.t Relude.Globals.StringMap.t Js.Promise.t;
   }
 end
 
@@ -273,12 +275,16 @@ module Make
           fields
       in
 
-      ( match (Handlers.onSubmitError, States.getErrors fields) with
-      | _, [] -> Handlers.onSubmit values
-      | Some onSubmitError, errors -> onSubmitError values errors
-      | None, _ -> () );
+      ( match
+          (Handlers.onSubmit, Handlers.onSubmitError, States.getErrors fields)
+        with
+      | Some onSubmit, _, [] -> onSubmit values
+      | _, Some onSubmitError, errors -> onSubmitError values errors
+      | _ -> () );
 
-      setFields fields
+      setFields fields;
+
+      Js.Promise.resolve fields
     in
 
     { Hook.reset; setValues; state; submit }
@@ -530,7 +536,7 @@ type ('values, 'error) t =
 
 let make (type values error)
     ~values:(module Values : Values with type t = values)
-    ~error:(module Error : Type with type t = error) ~onSubmit ?onSubmitError ()
+    ~error:(module Error : Type with type t = error) ?onSubmit ?onSubmitError ()
     : (values, error) t =
   let module Handlers = struct
     type error = Error.t
@@ -543,8 +549,8 @@ let make (type values error)
   end in
   (module Make (Values) (Error) (Handlers))
 
-let use ~values ~error ~onSubmit ?onSubmitError () =
-  React.useMemo0 (fun () -> make ~values ~error ~onSubmit ?onSubmitError ())
+let use ~values ~error ?onSubmit ?onSubmitError () =
+  React.useMemo0 (fun () -> make ~values ~error ?onSubmit ?onSubmitError ())
 
-let use1 ~values ~error ~onSubmit ?onSubmitError =
-  React.useMemo1 (fun () -> make ~values ~error ~onSubmit ?onSubmitError ())
+let use1 ~values ~error ?onSubmit ?onSubmitError =
+  React.useMemo1 (fun () -> make ~values ~error ?onSubmit ?onSubmitError ())
