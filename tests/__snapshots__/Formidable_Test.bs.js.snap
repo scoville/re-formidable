@@ -13,6 +13,11 @@ exports[`Formidable Component renders 1`] = `
     <div>
       <div>
         Email
+        <span
+          style="color: red;"
+        >
+          *
+        </span>
       </div>
       <input
         data-testid="email"
