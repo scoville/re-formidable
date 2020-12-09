@@ -1,4 +1,4 @@
-include FormidableExtra;
+open FormidableExtra;
 
 module Events = FormidableEvents;
 module Validations = FormidableValidations;
