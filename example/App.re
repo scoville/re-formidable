@@ -1,5 +1,3 @@
-open Relude.Globals;
-
 open Components;
 
 module Values = {
@@ -122,7 +120,7 @@ let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
       {({state: {values}}) =>
          (
            "Email address' length: "
-           ++ String.fromInt(String.length(values.email))
+           ++ Int.toString(String.length(values.email))
          )
          ->React.string}
     </Form.Consumer>

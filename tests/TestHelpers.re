@@ -1,4 +1,3 @@
-open Relude.Globals;
 open Jest;
 open Expect;
 open! Operators;
@@ -28,7 +27,7 @@ module Handler = {
   };
 
   let expectToMatchSnapshot = spy =>
-    spy |> MockJs.calls |> expect |> toMatchSnapshot;
+    spy->MockJs.calls->expect->toMatchSnapshot;
 };
 
 module Input = {
@@ -50,26 +49,25 @@ module Input = {
   let make = name => {
     let input = getByTestId(~matcher=`Str(name));
 
-    let focusState =
-      input >> Dom.Element.nextElementSibling >> Option.getOrThrow;
+    let focusState = result =>
+      result->input->Dom.Element.nextElementSibling->Option.getExn;
 
-    let status =
-      focusState >> Dom.Element.nextElementSibling >> Option.getOrThrow;
+    let status = result =>
+      result->focusState->Dom.Element.nextElementSibling->Option.getExn;
 
     let expectToMatchSnapshot = app =>
       {
-        AssertionResult.focusState:
-          app |> focusState |> Dom.Element.textContent,
-        status: app |> status |> Dom.Element.textContent,
+        AssertionResult.focusState: app->focusState->Dom.Element.textContent,
+        status: app->status->Dom.Element.textContent,
         value:
           app
-          |> input
-          |> Dom.Element.asHtmlElement
-          |> Option.getOrThrow
-          |> Dom.HtmlElement.value,
+          ->input
+          ->Dom.Element.asHtmlElement
+          ->Option.getExn
+          ->Dom.HtmlElement.value,
       }
-      |> expect
-      |> toMatchSnapshot;
+      ->expect
+      ->toMatchSnapshot;
 
     {expectToMatchSnapshot, focusState, input, status};
   };

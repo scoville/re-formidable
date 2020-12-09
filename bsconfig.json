@@ -23,7 +23,7 @@
     "number": "-48",
     "error": "+A+8+11+12+16+26+27+31+32+33+34+35+39+44+45+101+102+104+105"
   },
-  "bsc-flags": ["-bs-super-errors", "-bs-no-version-header"],
+  "bsc-flags": ["-bs-super-errors", "-bs-no-version-header", "-open Belt"],
   "ppx-flags": ["bs-optic/lenses-ppx"],
   "package-specs": [
     {
@@ -33,7 +33,7 @@
   ],
   "suffix": ".bs.js",
   "namespace": false,
-  "bs-dependencies": ["bs-bastet", "bs-optic", "reason-react", "relude"],
+  "bs-dependencies": ["bs-optic", "reason-react"],
   "bs-dev-dependencies": [
     "@glennsl/bs-jest",
     "bs-react-testing-library",
