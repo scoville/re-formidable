@@ -857,11 +857,6 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
-bisect_ppx@^2.1.0, bisect_ppx@^2.4.1:
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/bisect_ppx/-/bisect_ppx-2.4.1.tgz#57a0743abc6b39e148e83ca840df11133c0d5960"
-  integrity sha512-U6sd2mMqg28NEBmB4NuJRUJq0aTrzVCIkv8bnbzaomIZfO0DMWZ7B8QJ5aBY46tbaIeNrvmYWylnNNaoPEWZmw==
-
 brace-expansion@^1.1.7:
   version "1.1.11"
   resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.11.tgz#3c7fcbf529d87226f3d2f52b966ff5271eb441dd"
@@ -910,14 +905,6 @@ bs-abstract@^1.0.0:
   resolved "https://registry.yarnpkg.com/bs-abstract/-/bs-abstract-1.0.0.tgz#bead5a34382fe44bcfdbba7050c3316d119c30b4"
   integrity sha512-RldrJAr9N0n/Sr20PCSORztmKpRBw6Jbi7EJFsERZlmQ805/flCj9FMfMza4uUxLISAFSSEhIYs97mwt2X6I+w==
 
-bs-bastet@^1.2.5:
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/bs-bastet/-/bs-bastet-1.2.5.tgz#cde1add087e845d428a03c6d8412bd781713ccae"
-  integrity sha512-XIMv0CpovzTXmrEnzwnY2M3MuuesbGSzs+yaFvb3NAVyIP/aLlXCRv/roH6qybDBIGwW9JjbB7lxo73yqMi1qg==
-  dependencies:
-    bisect_ppx "^2.1.0"
-    bs-stdlib-shims "^0.1.0"
-
 bs-dom-testing-library@^0.6.2:
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/bs-dom-testing-library/-/bs-dom-testing-library-0.6.2.tgz#ddc347d2390502eb4803ba44efe23dcb3c7e3f47"
@@ -948,11 +935,6 @@ bs-react-testing-library@^0.7.3:
   dependencies:
     "@testing-library/react" "^10.0.2"
     bs-dom-testing-library "^0.6.2"
-
-bs-stdlib-shims@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/bs-stdlib-shims/-/bs-stdlib-shims-0.1.0.tgz#f64166392652a07c37b9be462beebb6c0c66a74e"
-  integrity sha512-CszWow8iXOKgmzNCc5dR3kERaqzIp3f4nbV7lJF5vS9BHm70GqLlu7OBE/VCPKZ5noG1VtJAIVqIdLFqUdIRUQ==
 
 bs-webapi@^0.18.0:
   version "0.18.0"
@@ -3014,13 +2996,6 @@ regex-not@^1.0.0, regex-not@^1.0.2:
   dependencies:
     extend-shallow "^3.0.2"
     safe-regex "^1.1.0"
-
-relude@^0.63.1:
-  version "0.63.1"
-  resolved "https://registry.yarnpkg.com/relude/-/relude-0.63.1.tgz#a2d4b0bf64a9db287b1ba860253f9fb06962057f"
-  integrity sha512-6ZSfdvIBSivTvvWca0+g99gfJwKh4yzFtxFzX1URYeJ2ZNVylOfSA6FF3oon7VOzJS9+EIOoy32xC2VjTtpzGA==
-  dependencies:
-    bisect_ppx "^2.4.1"
 
 remove-trailing-separator@^1.0.1:
   version "1.1.0"

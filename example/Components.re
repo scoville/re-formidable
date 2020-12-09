@@ -1,5 +1,3 @@
-open Relude.Globals;
-
 module Test = {
   [@react.component]
   let make = (~id, ~children) =>
@@ -11,13 +9,13 @@ module Errors = {
   let make = (~value: list(I18n.Error.t)) => {
     <div style={ReactDOMStyle.make(~color="red", ())}>
       {value
-       |> Array.fromList
-       |> Array.map((`error(name, _) as error) =>
-            <div key=name>
-              {("Field has errors: " ++ I18n.translate(error))->React.string}
-            </div>
-          )
-       |> React.array}
+       ->List.toArray
+       ->Array.map((`error(name, _) as error) =>
+           <div key=name>
+             {("Field has errors: " ++ I18n.translate(error))->React.string}
+           </div>
+         )
+       ->React.array}
     </div>;
   };
 };
@@ -38,17 +36,16 @@ module Status = {
 module Label = {
   [@react.component]
   let make = (~required, ~value) =>
-    value
-    |> Option.fold(React.null, value =>
-         <div>
-           value->React.string
-           {required
-              ? <span style={ReactDOMStyle.make(~color="red", ())}>
-                  "*"->React.string
-                </span>
-              : React.null}
-         </div>
-       );
+    value->Option.mapWithDefault(React.null, value =>
+      <div>
+        value->React.string
+        {required
+           ? <span style={ReactDOMStyle.make(~color="red", ())}>
+               "*"->React.string
+             </span>
+           : React.null}
+      </div>
+    );
 };
 
 module TextInput = {
