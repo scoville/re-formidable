@@ -425,7 +425,7 @@ module Make =
 
       let field = fields->Map.String.get(props##name);
       let children = props##children;
-      let value = Optic.Lens.view(props##lens, values);
+      let value = Optic.Lens.get(props##lens, values);
       let (isFocused, setIsFocused) = React.useState(() => false);
 
       let validationNames =
@@ -453,7 +453,7 @@ module Make =
                             props##errorLabel->OptionExtra.alt(props##label),
                           lens: props##lens,
                           name: props##name,
-                          value: Optic.Lens.view(props##lens, values),
+                          value: Optic.Lens.get(props##lens, values),
                           values,
                         })
                       ) {
@@ -503,7 +503,7 @@ module Make =
         let values = Optic.Lens.set(props##lens, value, values);
 
         onChange'->Option.forEach(onChange' =>
-          onChange'(Optic.Lens.view(props##lens, values))
+          onChange'(Optic.Lens.get(props##lens, values))
         );
 
         modifiers.setValues(values);

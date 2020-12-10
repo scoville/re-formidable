@@ -27,7 +27,7 @@ let email = (
 let equals = lens => (
   ["equals"],
   ({label, value, values}) =>
-    if (Lens.view(lens, values) === value) {
+    if (Lens.get(lens, values) === value) {
       `ok(value);
     } else {
       `error(`error(("equals", label)));
