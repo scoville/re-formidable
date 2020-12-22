@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@glennsl/bs-jest": "^0.6.0",
-    "bs-platform": "^8.3.3",
+    "bs-platform": "^8.4.2",
     "bs-react-testing-library": "^0.8.0",
     "bs-webapi": "^0.19.1",
     "moduleserve": "^0.9.1"
