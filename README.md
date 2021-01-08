@@ -4,7 +4,7 @@ _This library is not ready for prime time yet, and both its API and its implemen
 
 A library that allows you to build forms simply _and_ safely.
 
-See [Bs-Optic](https://github.com/scoville/bs-optic) for more about the lenses used in Formidable.
+See [ReOptic](https://github.com/scoville/re-optic) for more about the lenses used in Formidable.
 
 ### Commands
 
