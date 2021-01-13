@@ -2999,7 +2999,7 @@ range-parser@~1.2.1:
 
 "re-optic@https://github.com/scoville/re-optic/":
   version "0.1.0"
-  resolved "https://github.com/scoville/re-optic/#851a8116a38062e3b0a4fa6741aa06a274aa2629"
+  resolved "https://github.com/scoville/re-optic/#07ecd8f743e09ef3a5ad68855e3ac41705a3d3f0"
 
 react-dom@^16.13.1:
   version "16.13.1"
