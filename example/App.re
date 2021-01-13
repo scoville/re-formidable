@@ -37,7 +37,7 @@ module Form = (
 // Validations can be defined in an other module, and re-used easily
 let requiredValidations = Validations.[(`onChange, required)];
 
-let emailValidations = Validations.[(`onChange, required >>> email)];
+let emailValidations = Validations.[(`onChange, required->compose(email))];
 
 let passwordConfirmValidations =
   Validations.[(`onChange, equals(Values.password))];
