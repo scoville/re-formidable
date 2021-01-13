@@ -27,26 +27,36 @@ module Validator = {
   type t<'values, 'value, 'error> = Args.t<'values, 'value, 'error> => Value.t<'value, 'error>
 }
 
-module Pair = {
-  type t<'values, 'value, 'error> = (list<string>, Validator.t<'values, 'value, 'error>)
+module Description = {
+  type t<'values, 'value, 'error> = {
+    names: list<string>,
+    validator: Validator.t<'values, 'value, 'error>,
+  }
 }
 
-type t<'values, 'value, 'error> = (Strategy.t, Pair.t<'values, 'value, 'error>)
+type t<'values, 'value, 'error> = (Strategy.t, Description.t<'values, 'value, 'error>)
 
-let compose = ((name, validator), (name', validator')) => (
-  List.concat(name, name'),
-  field =>
+module type Values = {
+  type t
+}
+
+let compose = (
+  {Description.names: names, validator},
+  {Description.names: names', validator: validator'},
+) => {
+  Description.names: names->List.concat(names'),
+  validator: field =>
     switch validator(field) {
     | #ok(_) => validator'(field)
     | #error(_) as error => error
     },
-)
+}
 
 let getStrategy = ((strategy, _)) => strategy
 
-let getName = ((_, (name, _))) => name
+let getNames = ((_, {Description.names: names})) => names
 
-let getValidator = ((_, (_, validator))) => validator
+let getValidator = ((_, {Description.validator: validator})) => validator
 
 /* * Returns true if a validation should be performed in the given context.
  If no context is provided, always returns true */

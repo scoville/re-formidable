@@ -28,12 +28,13 @@ let makeForm = Formidable.make(~values=module(Values), ~error=module(I18n.Error)
 module Form = unpack(makeForm(~onSubmit=_values => (), ~onSubmitError=(_values, _errors) => (), ()))
 
 open Validations
+
 // Validations can be defined in an other module, and re-used easily
-let requiredValidations = list{(#onChange, required)}
+let requiredValidations = [(#onChange, required)]
 
-let emailValidations = list{(#onChange, required->compose(email))}
+let emailValidations = [(#onChange, required->compose(email))]
 
-let passwordConfirmValidations = list{(#onChange, equals(Values.password))}
+let passwordConfirmValidations = [(#onChange, equals(Values.password))]
 
 module Child = {
   @react.component

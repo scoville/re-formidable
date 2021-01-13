@@ -5,10 +5,9 @@ module Test = {
 
 module Errors = {
   @react.component
-  let make = (~value: list<I18n.Error.t>) => {
+  let make = (~value: array<I18n.Error.t>) => {
     <div style={ReactDOMStyle.make(~color="red", ())}>
       {value
-      ->List.toArray
       ->Array.map((#error(name, _) as error) =>
         <div key=name> {("Field has errors: " ++ I18n.translate(error))->React.string} </div>
       )

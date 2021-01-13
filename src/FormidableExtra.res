@@ -1,15 +1,9 @@
-module ListExtra = {
-  let flatMap = (xs, f) => xs->List.reduce(list{}, (acc, x) => acc->List.concat(f(x)))
-
-  let rec includes = (xs, y) =>
-    switch xs {
-    | list{} => false
-    | list{x, ...xs} => x === y ? true : includes(xs, y)
-    }
+module ArrayExtra = {
+  let flatMap = (xs, f) => xs->Array.reduce([], (acc, x) => acc->Js.Array2.concat(f(x)))
 }
 
 module OptionExtra = {
-  let alt = (option1, option2) =>
+  let or = (option1, option2) =>
     switch (option1, option2) {
     | (Some(_), _) => option1
     | _ => option2
