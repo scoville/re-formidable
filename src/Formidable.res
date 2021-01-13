@@ -72,7 +72,7 @@ module States = {
 
   let isValid = fields => fields->Map.String.every(_ => Field.isValid)
 
-  let isTouched = fields => fields->Map.String.some(_ => Field.isPristine)
+  let isTouched = fields => fields->Map.String.some(_ => Field.isTouched)
 
   let hasErrors = fields => fields->Map.String.some(_ => Field.hasErrors)
 
