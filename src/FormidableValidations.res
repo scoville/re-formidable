@@ -1,19 +1,18 @@
-/* * Strategy used during validation, on change, on blur, or on demand.
- * On demand validation will not be triggered automatically, and you need
- * to use the validate function manually.
- */
+@ocaml.doc(`Strategy used during validation, on change, on blur, or on demand.
+On demand validation will not be triggered automatically, and you need
+to use the validate function manually.`)
 module Strategy = {
   type t = [#onBlur | #onChange | #onDemand]
 }
 
-/* * The value returned by a validator, ok or error */
+@ocaml.doc(`The value returned by a validator, ok or error`)
 module Value = {
   type t<'value, 'error> = [#ok('value) | #error('error)]
 }
 
-/* * The validator is the function that performs the validation */
+@ocaml.doc(`The validator is the function that performs the validation`)
 module Validator = {
-  /* * The arguments provided to the validator function */
+  @ocaml.doc(`The arguments provided to the validator function`)
   module Args = {
     type t<'values, 'value, 'error> = {
       label: option<string>,
@@ -58,9 +57,8 @@ let getNames = ((_, {Description.names: names})) => names
 
 let getValidator = ((_, {Description.validator: validator})) => validator
 
-/* * Returns true if a validation should be performed in the given context.
- If no context is provided, always returns true */
-
+@ocaml.doc(`Returns true if a validation should be performed in the given context.
+If no context is provided, always returns true`)
 let shouldValidate = (~context, ~strategy) =>
   switch (context, strategy) {
   | (None, _)
