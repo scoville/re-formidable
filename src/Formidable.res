@@ -20,13 +20,13 @@ module type Handlers = {
 
   let onSubmit: option<values => unit>
 
-  let onSubmitError: option<(values, list<error>) => unit>
+  let onSubmitError: option<(values, array<error>) => unit>
 }
 
 module States = {
   module Field = {
     module Status = {
-      type t<'error> = [#pristine | #valid | #touched | #errors(list<'error>)]
+      type t<'error> = [#pristine | #valid | #touched | #errors(array<'error>)]
     }
 
     @bs.deriving(accessors)
@@ -77,8 +77,8 @@ module States = {
   let hasErrors = fields => fields->Map.String.some(_ => Field.hasErrors)
 
   let getErrors = fields =>
-    fields->Map.String.reduce(list{}, (acc, _, field) =>
-      field->Field.getErrors->Option.mapWithDefault(acc, errors => List.concat(acc, errors))
+    fields->Map.String.reduce([], (acc, _, field) =>
+      field->Field.getErrors->Option.mapWithDefault(acc, errors => acc->Js.Array2.concat(errors))
     )
 
   let reset = fields => fields->Map.String.map(Field.reset)
@@ -185,7 +185,7 @@ module type Form = {
       ~onBlur: ReactEvent.Focus.t => unit=?,
       ~onChange: 'value => unit=?,
       ~onFocus: ReactEvent.Focus.t => unit=?,
-      ~validations: list<Validations.t<values, 'value, error>>=?,
+      ~validations: array<Validations.t<values, 'value, error>>=?,
       ~disable: bool=?,
       ~key: string=?,
       unit,
@@ -198,7 +198,7 @@ module type Form = {
       "onBlur": option<ReactEvent.Focus.t => unit>,
       "onChange": option<'value => unit>,
       "onFocus": option<ReactEvent.Focus.t => unit>,
-      "validations": option<list<Validations.t<values, 'value, error>>>,
+      "validations": option<array<Validations.t<values, 'value, error>>>,
       "disable": option<bool>,
     } = ""
 
@@ -211,7 +211,7 @@ module type Form = {
       "onBlur": option<ReactEvent.Focus.t => unit>,
       "onChange": option<'value => unit>,
       "onFocus": option<ReactEvent.Focus.t => unit>,
-      "validations": option<list<Validations.t<values, 'value, error>>>,
+      "validations": option<array<Validations.t<values, 'value, error>>>,
       "disable": option<bool>,
     }>
   }
@@ -293,7 +293,7 @@ module Make = (
       })
 
       switch (Handlers.onSubmit, Handlers.onSubmitError, States.getErrors(fields)) {
-      | (Some(onSubmit), _, list{}) => onSubmit(values)
+      | (Some(onSubmit), _, []) => onSubmit(values)
       | (_, Some(onSubmitError), errors) => onSubmitError(values, errors)
       | _ => ()
       }
@@ -366,7 +366,7 @@ module Make = (
       ~onBlur: ReactEvent.Focus.t => unit=?,
       ~onChange: 'value => unit=?,
       ~onFocus: ReactEvent.Focus.t => unit=?,
-      ~validations: list<Validations.t<values, 'value, error>>=?,
+      ~validations: array<Validations.t<values, 'value, error>>=?,
       ~disable: bool=?,
       ~key: string=?,
       unit,
@@ -379,7 +379,7 @@ module Make = (
       "onBlur": option<ReactEvent.Focus.t => unit>,
       "onChange": option<'value => unit>,
       "onFocus": option<ReactEvent.Focus.t => unit>,
-      "validations": option<list<Validations.t<values, 'value, error>>>,
+      "validations": option<array<Validations.t<values, 'value, error>>>,
       "disable": option<bool>,
     } = ""
 
@@ -392,18 +392,20 @@ module Make = (
       let (isFocused, setIsFocused) = React.useState(() => false)
 
       let validationNames =
-        props["validations"]->Option.mapWithDefault(list{}, validations =>
-          validations->ListExtra.flatMap(Validations.getName)
+        props["validations"]->Option.mapWithDefault([], validations =>
+          validations->ArrayExtra.flatMap(validation =>
+            validation->Validations.getNames->List.toArray
+          )
         )
 
-      let hasValidation = name => validationNames->ListExtra.includes(name)
+      let hasValidation = name => validationNames->Js.Array2.includes(name)
 
       let validate = React.useCallback1((validationContext, values) =>
         props["validations"]->Option.mapWithDefault(#valid, validations =>
-          switch validations->List.keepMap(((strategy, (_, validation))) =>
+          switch validations->Array.keepMap(((strategy, {validator})) =>
             if Validations.shouldValidate(~context=validationContext, ~strategy) {
-              switch validation({
-                Validations.Validator.Args.label: props["errorLabel"]->OptionExtra.alt(
+              switch validator({
+                Validations.Validator.Args.label: props["errorLabel"]->OptionExtra.or(
                   props["label"],
                 ),
                 lens: props["lens"],
@@ -418,11 +420,11 @@ module Make = (
               None
             }
           ) {
-          | list{} => #valid
+          | [] => #valid
           | errors => #errors(errors)
           }
         )
-      , List.toArray(validationNames))
+      , validationNames)
 
       let validateAndUpdate = (validationContext, values) =>
         modifiers.updateField(props["name"], field => {
