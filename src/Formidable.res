@@ -153,30 +153,22 @@ module type Form = {
   let use: unit => Hook.t<values, error>
 
   module Provider: {
-    @bs.obj
-    external makeProps: (
-      ~children: React.element,
-      ~key: string=?,
-      unit,
-    ) => {"children": React.element} = ""
-
-    let make: React.component<{"children": React.element}>
+    @react.component
+    let make: (~children: React.element) => React.element
   }
 
   module Consumer: {
     type children = Hook.t<values, error> => React.element
 
-    @bs.obj
-    external makeProps: (~children: children, ~key: string=?, unit) => {"children": children} = ""
-
-    let make: React.component<{"children": children}>
+    @react.component
+    let make: (~children: children) => React.element
   }
 
   module Field: {
     type children<'value> = Props.Field.t<'value, error> => React.element
 
-    @bs.obj
-    external makeProps: (
+    @react.component
+    let make: (
       ~name: string,
       ~lens: Optic.Lens.t<values, 'value>,
       ~children: children<'value>,
@@ -187,37 +179,11 @@ module type Form = {
       ~onFocus: ReactEvent.Focus.t => unit=?,
       ~validations: array<Validations.t<values, 'value, error>>=?,
       ~disable: bool=?,
-      ~key: string=?,
-      unit,
-    ) => {
-      "name": string,
-      "lens": Optic.Lens.t<values, 'value>,
-      "children": children<'value>,
-      "label": option<string>,
-      "errorLabel": option<string>,
-      "onBlur": option<ReactEvent.Focus.t => unit>,
-      "onChange": option<'value => unit>,
-      "onFocus": option<ReactEvent.Focus.t => unit>,
-      "validations": option<array<Validations.t<values, 'value, error>>>,
-      "disable": option<bool>,
-    } = ""
-
-    let make: React.component<{
-      "name": string,
-      "lens": Optic.Lens.t<values, 'value>,
-      "children": children<'value>,
-      "label": option<string>,
-      "errorLabel": option<string>,
-      "onBlur": option<ReactEvent.Focus.t => unit>,
-      "onChange": option<'value => unit>,
-      "onFocus": option<ReactEvent.Focus.t => unit>,
-      "validations": option<array<Validations.t<values, 'value, error>>>,
-      "disable": option<bool>,
-    }>
+    ) => React.element
   }
 
-  @bs.obj
-  external makeProps: (
+  @react.component
+  let make: (
     ~action: string=?,
     ~method_: FormMethod.t=?,
     ~preventDefault: bool=?,
@@ -225,27 +191,7 @@ module type Form = {
     ~className: string=?,
     ~disable: bool=?,
     ~children: React.element,
-    ~key: string=?,
-    unit,
-  ) => {
-    "action": option<string>,
-    "method_": option<FormMethod.t>,
-    "preventDefault": option<bool>,
-    "stopPropagation": option<bool>,
-    "className": option<string>,
-    "disable": option<bool>,
-    "children": React.element,
-  } = ""
-
-  let make: React.component<{
-    "action": option<string>,
-    "method_": option<FormMethod.t>,
-    "preventDefault": option<bool>,
-    "stopPropagation": option<bool>,
-    "className": option<string>,
-    "disable": option<bool>,
-    "children": React.element,
-  }>
+  ) => React.element
 }
 
 module Make = (
@@ -307,14 +253,8 @@ module Make = (
   }
 
   module Provider = {
-    @bs.obj
-    external makeProps: (
-      ~children: React.element,
-      ~key: string=?,
-      unit,
-    ) => {"children": React.element} = ""
-
-    let make = props => {
+    @react.component
+    let make = (~children) => {
       let provider = React.Context.provider(context)
       let (state, _) = React.useContext(context)
       let (state, setState) = React.useState(() => state)
@@ -335,19 +275,16 @@ module Make = (
           }),
       }
 
-      React.createElement(provider, {"children": props["children"], "value": (state, modifiers)})
+      React.createElement(provider, {"children": children, "value": (state, modifiers)})
     }
   }
 
   module Consumer = {
     type children = Hook.t<values, error> => React.element
 
-    @bs.obj
-    external makeProps: (~children: children, ~key: string=?, unit) => {"children": children} = ""
-
-    let make = props => {
+    @react.component
+    let make = (~children: children) => {
       let hook = use()
-      let children: children = (props["children"]: children)
 
       children(hook)
     }
@@ -356,43 +293,28 @@ module Make = (
   module Field = {
     type children<'value> = Props.Field.t<'value, error> => React.element
 
-    @bs.obj
-    external makeProps: (
+    @react.component
+    let make = (
       ~name: string,
       ~lens: Optic.Lens.t<values, 'value>,
       ~children: children<'value>,
-      ~label: string=?,
-      ~errorLabel: string=?,
-      ~onBlur: ReactEvent.Focus.t => unit=?,
-      ~onChange: 'value => unit=?,
-      ~onFocus: ReactEvent.Focus.t => unit=?,
-      ~validations: array<Validations.t<values, 'value, error>>=?,
-      ~disable: bool=?,
-      ~key: string=?,
-      unit,
+      ~label: option<string>=?,
+      ~errorLabel: option<string>=?,
+      ~onBlur: option<ReactEvent.Focus.t => unit>=?,
+      ~onChange: option<'value => unit>=?,
+      ~onFocus: option<ReactEvent.Focus.t => unit>=?,
+      ~validations: option<array<Validations.t<values, 'value, error>>>=?,
+      ~disable: option<bool>=?,
     ) => {
-      "name": string,
-      "lens": Optic.Lens.t<values, 'value>,
-      "children": children<'value>,
-      "label": option<string>,
-      "errorLabel": option<string>,
-      "onBlur": option<ReactEvent.Focus.t => unit>,
-      "onChange": option<'value => unit>,
-      "onFocus": option<ReactEvent.Focus.t => unit>,
-      "validations": option<array<Validations.t<values, 'value, error>>>,
-      "disable": option<bool>,
-    } = ""
-
-    let make = props => {
       let ({Context.isDisabled: isDisabled, fields, values}, modifiers) = React.useContext(context)
 
-      let field = fields->Map.String.get(props["name"])
-      let children = props["children"]
-      let value = Optic.Lens.get(props["lens"], values)
+      let field = fields->Map.String.get(name)
+      let children = children
+      let value = Optic.Lens.get(lens, values)
       let (isFocused, setIsFocused) = React.useState(() => false)
 
       let validationNames =
-        props["validations"]->Option.mapWithDefault([], validations =>
+        validations->Option.mapWithDefault([], validations =>
           validations->ArrayExtra.flatMap(validation =>
             validation->Validations.getNames->List.toArray
           )
@@ -401,16 +323,14 @@ module Make = (
       let hasValidation = name => validationNames->Js.Array2.includes(name)
 
       let validate = React.useCallback1((validationContext, values) =>
-        props["validations"]->Option.mapWithDefault(#valid, validations =>
+        validations->Option.mapWithDefault(#valid, validations =>
           switch validations->Array.keepMap(((strategy, {validator})) =>
             if Validations.shouldValidate(~context=validationContext, ~strategy) {
               switch validator({
-                Validations.Validator.Args.label: props["errorLabel"]->OptionExtra.or(
-                  props["label"],
-                ),
-                lens: props["lens"],
-                name: props["name"],
-                value: Optic.Lens.get(props["lens"], values),
+                Validations.Validator.Args.label: errorLabel->OptionExtra.or(label),
+                lens: lens,
+                name: name,
+                value: Optic.Lens.get(lens, values),
                 values: values,
               }) {
               | #ok(_) => None
@@ -427,7 +347,7 @@ module Make = (
       , validationNames)
 
       let validateAndUpdate = (validationContext, values) =>
-        modifiers.updateField(props["name"], field => {
+        modifiers.updateField(name, field => {
           ...field,
           status: validate(validationContext, values),
         })
@@ -435,7 +355,7 @@ module Make = (
       let onBlur = event => {
         setIsFocused(_ => false)
 
-        props["onBlur"]->Option.forEach(onBlur => onBlur(event))
+        onBlur->Option.forEach(onBlur => onBlur(event))
 
         validateAndUpdate(Some(#onBlur), values)
       }
@@ -443,39 +363,38 @@ module Make = (
       let onFocus = event => {
         setIsFocused(_ => true)
 
-        props["onFocus"]->Option.forEach(onFocus => onFocus(event))
+        onFocus->Option.forEach(onFocus => onFocus(event))
 
         if field->Option.mapWithDefault(false, States.Field.isPristine) {
-          modifiers.updateField(props["name"], field => {...field, status: #touched})
+          modifiers.updateField(name, field => {...field, status: #touched})
         }
       }
 
       let onChange = value => {
-        let onChange' = props["onChange"]
+        let onChange' = onChange
 
-        let values = Optic.Lens.set(props["lens"], value, values)
+        let values = Optic.Lens.set(lens, value, values)
 
-        onChange'->Option.forEach(onChange' => onChange'(Optic.Lens.get(props["lens"], values)))
+        onChange'->Option.forEach(onChange' => onChange'(Optic.Lens.get(lens, values)))
 
         modifiers.setValues(values)
         validateAndUpdate(Some(#onChange), values)
       }
 
-      let setStatus = status =>
-        modifiers.updateField(props["name"], field => {...field, status: status})
+      let setStatus = status => modifiers.updateField(name, field => {...field, status: status})
 
       React.useEffect0(() => {
         if Option.isNone(field) {
-          modifiers.setField(props["name"], {States.Field.status: #pristine, validate: validate})
+          modifiers.setField(name, {States.Field.status: #pristine, validate: validate})
         }
         None
       })
 
       children({
-        Props.Field.isDisabled: isDisabled || props["disable"]->Option.getWithDefault(false),
+        Props.Field.isDisabled: isDisabled || disable->Option.getWithDefault(false),
         isFocused: isFocused,
-        label: props["label"],
-        name: props["name"],
+        label: label,
+        name: name,
         onBlur: onBlur,
         onChange: onChange,
         onFocus: onFocus,
@@ -488,30 +407,18 @@ module Make = (
     }
   }
 
-  @bs.obj
-  external makeProps: (
-    ~action: string=?,
-    ~method_: FormMethod.t=?,
-    ~preventDefault: bool=?,
-    ~stopPropagation: bool=?,
-    ~className: string=?,
-    ~disable: bool=?,
+  @react.component
+  let make = (
+    ~action: option<string>=?,
+    ~method_: option<FormMethod.t>=?,
+    ~preventDefault: option<bool>=?,
+    ~stopPropagation: option<bool>=?,
+    ~className: option<string>=?,
+    ~disable: option<bool>=?,
     ~children: React.element,
-    ~key: string=?,
-    unit,
   ) => {
-    "action": option<string>,
-    "method_": option<FormMethod.t>,
-    "preventDefault": option<bool>,
-    "stopPropagation": option<bool>,
-    "className": option<string>,
-    "disable": option<bool>,
-    "children": React.element,
-  } = ""
-
-  let make = props => {
     let (_, {Context.setIsDisabled: setIsDisabled}) = React.useContext(context)
-    let disable = props["disable"]->Option.getWithDefault(false)
+    let disable = disable->Option.getWithDefault(false)
     let {Hook.submit: submit} = use()
 
     React.useEffect1(() => {
@@ -524,16 +431,12 @@ module Make = (
       /* The ReactDOM.props function accepts only a `method` argument
        which doesn't compile, hence the following hack */
       ~props=Obj.magic({
-        "className": props["className"],
-        "action": props["action"],
-        "_method": props["method_"]->Option.map(FormMethod.toString),
-        "onSubmit": Events.handle'(
-          ~preventDefault=?props["preventDefault"],
-          ~stopPropagation=?props["stopPropagation"],
-          submit,
-        ),
+        "className": className,
+        "action": action,
+        "_method": method_->Option.map(FormMethod.toString),
+        "onSubmit": Events.handle'(~preventDefault?, ~stopPropagation?, submit),
       }),
-      [props["children"]],
+      [children],
     )
   }
 }

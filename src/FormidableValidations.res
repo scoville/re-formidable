@@ -35,10 +35,6 @@ module Description = {
 
 type t<'values, 'value, 'error> = (Strategy.t, Description.t<'values, 'value, 'error>)
 
-module type Values = {
-  type t
-}
-
 let compose = (
   {Description.names: names, validator},
   {Description.names: names', validator: validator'},
