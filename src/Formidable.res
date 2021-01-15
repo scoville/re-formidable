@@ -191,7 +191,7 @@ module type Form = {
   ) => React.element
 }
 
-module Make = (Values: Values, Error: Type, ValidationLabel: Type): (
+module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
   Form
     with type values = Values.t
     and type error = Error.t
@@ -442,31 +442,31 @@ module Make = (Values: Values, Error: Type, ValidationLabel: Type): (
   }
 }
 
-type t<'values, 'error, 'validationLabel> = module(Form with
-  type error = 'error
+type t<'validationLabel, 'error, 'values> = module(Form with
+  type validationLabel = 'validationLabel
+  and type error = 'error
   and type values = 'values
-  and type validationLabel = 'validationLabel
 )
 
 let make = (
-  type values error validationLabel,
-  ~values as module(Values: Values with type t = values),
-  ~error as module(Error: Type with type t = error),
+  type validationLabel error values,
   ~validationLabel as module(ValidationLabel: Type with type t = validationLabel),
-): t<values, error, validationLabel> => {
-  module(Make(Values, Error, ValidationLabel))
+  ~error as module(Error: Type with type t = error),
+  ~values as module(Values: Values with type t = values),
+): t<validationLabel, error, values> => {
+  module(Make(ValidationLabel, Error, Values))
 }
 
 let use = (
-  type values error validationLabel,
-  ~values: module(Values with type t = values),
-  ~error: module(Type with type t = error),
+  type validationLabel error values,
   ~validationLabel: module(Type with type t = validationLabel),
+  ~error: module(Type with type t = error),
+  ~values: module(Values with type t = values),
   ~onSuccess=?,
   ~onError=?,
   (),
 ) => {
-  let module(Form) = make(~values, ~error, ~validationLabel)
+  let module(Form) = make(~validationLabel, ~error, ~values)
 
   React.useMemo0(() => {
     Form.use(~onSuccess?, ~onError?, ())
@@ -474,14 +474,14 @@ let use = (
 }
 
 let use1 = (
-  type values error validationLabel,
-  ~values: module(Values with type t = values),
-  ~error: module(Type with type t = error),
+  type validationLabel error values,
   ~validationLabel: module(Type with type t = validationLabel),
+  ~error: module(Type with type t = error),
+  ~values: module(Values with type t = values),
   ~onSuccess=?,
   ~onError=?,
 ) => {
-  let module(Form) = make(~values, ~error, ~validationLabel)
+  let module(Form) = make(~validationLabel, ~error, ~values)
 
   React.useMemo1(() => {
     Form.use(~onSuccess?, ~onError?, ())
