@@ -41,15 +41,13 @@ let emailValidations = [(#onChange, required->compose(email))]
 
 let passwordConfirmValidations = [(#onChange, equals(Values.password))]
 
+// The error appended to the email when it already exists
+let emailAlreadyExistsError: I18n.Error.t = #error("email", Some("already exists"))
+
 module Child = {
   @react.component
   let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
-    let {
-      Formidable.Hook.reset: reset,
-      state: {values: {Values.email: email}},
-      setFieldStatus,
-      submit,
-    } = Form.use(
+    let {addError, removeError, reset, state: {values: {email}}, submit} = Form.use(
       ~onSuccess=values => Js.log2("Success: ", values),
       ~onError=(values, errors) => Js.log3("Error: ", errors, values),
       (),
@@ -60,8 +58,8 @@ module Child = {
     React.useEffect1(() => {
       switch emailValidationResponse {
       | Init | Loading => ignore()
-      | Data(_) => setFieldStatus("email", #valid)
-      | Error(_) => setFieldStatus("email", #errors([#error("email", Some("already exists"))]))
+      | Data(_) => removeError("email", emailAlreadyExistsError)
+      | Error(_) => addError("email", emailAlreadyExistsError)
       }
 
       None

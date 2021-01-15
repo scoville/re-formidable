@@ -117,6 +117,8 @@ module Context = {
 
 module Hook = {
   type t<'values, 'error> = {
+    addError: (string, 'error) => unit,
+    removeError: (string, 'error) => unit,
     reset: unit => unit,
     setFieldStatus: (string, States.Field.Status.t<'error>) => unit,
     setValues: ('values => 'values) => unit,
@@ -233,6 +235,32 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
 
     let setValues = f => setValues(f(values))
 
+    let updateFieldStatus = (name, f) =>
+      updateField(name, field => {...field, status: f(field.status)})
+
+    let setFieldStatus = (name, status) => updateFieldStatus(name, _ => status)
+
+    let addError = (name, error) =>
+      updateFieldStatus(name, status => {
+        switch status {
+        | #touched | #pristine | #valid => #errors([error])
+        | #errors(errors) when errors->Js.Array2.includes(error) => status
+        | #errors(errors) => errors->Js.Array2.concat([error])->#errors
+        }
+      })
+
+    let removeError = (name, error) =>
+      updateFieldStatus(name, status =>
+        switch status {
+        | #touched | #pristine | #valid => status
+        | #errors(errors) =>
+          switch errors->Js.Array2.filter(error' => error != error') {
+          | [] => #valid
+          | errors => #errors(errors)
+          }
+        }
+      )
+
     let submit = () => {
       let fields = fields->Map.String.map(({States.Field.validate: validate} as field) => {
         ...field,
@@ -251,8 +279,10 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
     }
 
     {
-      Hook.reset: reset,
-      setFieldStatus: (name, status) => updateField(name, field => {...field, status: status}),
+      Hook.addError: addError,
+      removeError: removeError,
+      reset: reset,
+      setFieldStatus: setFieldStatus,
       setValues: setValues,
       state: state,
       submit: submit,

@@ -5,6 +5,16 @@ type t<'data, 'error> = Init | Loading | Data('data) | Error('error)
 let useFetch = (~path) => {
   let (response, setResponse) = React.useState(() => Init)
 
+  // Prevents memory leaks
+  let (timeoutId, setTimeoutId) = React.useState(() => None)
+
+  React.useEffect1(() =>
+    switch timeoutId {
+    | None => None
+    | Some(timeoutId) => Some(() => Js.Global.clearTimeout(timeoutId))
+    }
+  , [timeoutId])
+
   (
     response,
     (~body) => {
@@ -17,7 +27,7 @@ let useFetch = (~path) => {
       | _ => Error(#notFound)
       }
 
-      Js.Global.setTimeout(() => setResponse(_ => data), 1000)->ignore
+      setTimeoutId(_ => Some(Js.Global.setTimeout(() => setResponse(_ => data), 200)))
     },
   )
 }

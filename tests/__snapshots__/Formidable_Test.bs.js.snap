@@ -129,6 +129,22 @@ Object {
 }
 `;
 
+exports[`Formidable Field (example: email) Change focus status and trigger already exists error - focus, type email address, then blur 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Field has errors: already exists/email",
+  "value": "already@exists.com",
+}
+`;
+
+exports[`Formidable Field (example: email) Change focus status and trigger only displays loading/validating message - focus, then blur 1`] = `
+Object {
+  "focusState": "Blur",
+  "status": "Validating...",
+  "value": "",
+}
+`;
+
 exports[`Formidable Field (example: email) Change focus status and trigger required error - focus then blur 1`] = `
 Object {
   "focusState": "Blur",
