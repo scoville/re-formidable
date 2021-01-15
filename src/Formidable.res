@@ -316,16 +316,14 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
 
       let validationNames =
         validations->Option.mapWithDefault([], validations =>
-          validations->ArrayExtra.flatMap(validation =>
-            validation->Validations.getNames->List.toArray
-          )
+          validations->ArrayExtra.flatMap(Validations.getNames)
         )
 
       let hasValidation = name => validationNames->Js.Array2.includes(name)
 
       let validate = React.useCallback1((validationContext, values) =>
         validations->Option.mapWithDefault(#valid, validations =>
-          switch validations->Array.keepMap(((strategy, {validator})) =>
+          switch validations->Array.keepMap(((strategy, (_, validator))) =>
             if Validations.shouldValidate(~context=validationContext, ~strategy) {
               switch validator({
                 Validations.Validator.Args.label: errorLabel->OptionExtra.or(label),
