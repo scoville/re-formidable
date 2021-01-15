@@ -23,7 +23,14 @@ module Values = {
 // but in some cases you can simply use the hook provided by Formidable
 // or define your form at runtime using the make function
 // All the above solutions come with pros and cons
-module Form = Formidable.Make(Values, I18n.Error, Validations.Label)
+
+// Since we know our whole application will rely on the same validation labels and errors
+// we can define a form maker functor very easily as follow:
+module MakeForm = Formidable.Make(Validations.Label, I18n.Error)
+
+// We can now use the MakeForm functor from above to build any form using any kind of values
+// all the validations and input components will just work, and the creation of a new form is trivial
+module Form = MakeForm(Values)
 
 open Validations
 
