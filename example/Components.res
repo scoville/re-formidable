@@ -46,7 +46,7 @@ module TextInput = {
   @react.component
   let make = React.memo((
     ~field as {
-      Formidable.Props.Field.isDisabled: isDisabled,
+      isDisabled,
       isFocused,
       label,
       name,
@@ -56,10 +56,10 @@ module TextInput = {
       status,
       hasValidation,
       value,
-    },
+    }: Formidable.Props.Field.t<_, _, Validations.Label.t>,
   ) =>
     <div>
-      <Label required={hasValidation("required")} value=label />
+      <Label required={hasValidation(#required)} value=label />
       <Test id=name>
         <input
           disabled=isDisabled

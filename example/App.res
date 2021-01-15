@@ -23,7 +23,7 @@ module Values = {
 // but in some cases you can simply use the hook provided by Formidable
 // or define your form at runtime using the make function
 // All the above solutions come with pros and cons
-module Form = Formidable.Make(Values, I18n.Error)
+module Form = Formidable.Make(Values, I18n.Error, Validations.Label)
 
 open Validations
 

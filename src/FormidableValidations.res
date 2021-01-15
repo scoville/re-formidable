@@ -27,13 +27,16 @@ module Validator = {
 }
 
 module Description = {
-  type t<'values, 'value, 'error> = {
-    names: list<string>,
+  type t<'values, 'value, 'error, 'label> = {
+    names: list<'label>,
     validator: Validator.t<'values, 'value, 'error>,
   }
 }
 
-type t<'values, 'value, 'error> = (Strategy.t, Description.t<'values, 'value, 'error>)
+type t<'values, 'value, 'error, 'label> = (
+  Strategy.t,
+  Description.t<'values, 'value, 'error, 'label>,
+)
 
 let compose = (
   {Description.names: names, validator},
