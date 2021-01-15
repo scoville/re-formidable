@@ -13,16 +13,6 @@ module type Values = {
   let init: t
 }
 
-module type Handlers = {
-  type values
-
-  type error
-
-  let onSubmit: option<values => unit>
-
-  let onSubmitError: option<(values, array<error>) => unit>
-}
-
 module States = {
   module Field = {
     module Status = {
@@ -150,7 +140,11 @@ module type Form = {
 
   type error
 
-  let use: unit => Hook.t<values, error>
+  let use: (
+    ~onSuccess: values => unit=?,
+    ~onError: (values, array<error>) => unit=?,
+    unit,
+  ) => Hook.t<values, error>
 
   module Provider: {
     @react.component
@@ -158,7 +152,7 @@ module type Form = {
   }
 
   module Consumer: {
-    type children = Hook.t<values, error> => React.element
+    type children = Context.state<values, error> => React.element
 
     @react.component
     let make: (~children: children) => React.element
@@ -171,7 +165,6 @@ module type Form = {
     let make: (
       ~name: string,
       ~lens: Optic.Lens.t<values, 'value>,
-      ~children: children<'value>,
       ~label: string=?,
       ~errorLabel: string=?,
       ~onBlur: ReactEvent.Focus.t => unit=?,
@@ -179,6 +172,7 @@ module type Form = {
       ~onFocus: ReactEvent.Focus.t => unit=?,
       ~validations: array<Validations.t<values, 'value, error>>=?,
       ~disable: bool=?,
+      ~children: children<'value>,
     ) => React.element
   }
 
@@ -190,15 +184,14 @@ module type Form = {
     ~stopPropagation: bool=?,
     ~className: string=?,
     ~disable: bool=?,
+    ~onSubmit: unit => Js.Promise.t<Map.String.t<States.Field.t<values, error>>>=?,
     ~children: React.element,
   ) => React.element
 }
 
-module Make = (
-  Values: Values,
-  Error: Type,
-  Handlers: Handlers with type values = Values.t and type error = Error.t,
-): (Form with type values = Values.t and type error = Error.t) => {
+module Make = (Values: Values, Error: Type): (
+  Form with type values = Values.t and type error = Error.t
+) => {
   type error = Error.t
 
   type values = Values.t
@@ -219,7 +212,7 @@ module Make = (
     },
   ))
 
-  let use = () => {
+  let use = (~onSuccess=?, ~onError=?, ()) => {
     let (
       {Context.fields: fields, values} as state,
       {Context.setFields: setFields, setValues},
@@ -238,9 +231,9 @@ module Make = (
         status: validate(None, values),
       })
 
-      switch (Handlers.onSubmit, Handlers.onSubmitError, States.getErrors(fields)) {
-      | (Some(onSubmit), _, []) => onSubmit(values)
-      | (_, Some(onSubmitError), errors) => onSubmitError(values, errors)
+      switch (States.getErrors(fields), onSuccess, onError) {
+      | ([], Some(onSuccess), _) => onSuccess(values)
+      | (errors, _, Some(onError)) => onError(values, errors)
       | _ => ()
       }
 
@@ -258,6 +251,7 @@ module Make = (
       let provider = React.Context.provider(context)
       let (state, _) = React.useContext(context)
       let (state, setState) = React.useState(() => state)
+
       let modifiers = {
         Context.removeField: name =>
           setState(state => {...state, fields: state.fields->Map.String.remove(name)}),
@@ -280,13 +274,13 @@ module Make = (
   }
 
   module Consumer = {
-    type children = Hook.t<values, error> => React.element
+    type children = Context.state<values, error> => React.element
 
     @react.component
-    let make = (~children: children) => {
-      let hook = use()
+    let make = (~children) => {
+      let (state, _) = React.useContext(context)
 
-      children(hook)
+      children(state)
     }
   }
 
@@ -295,16 +289,16 @@ module Make = (
 
     @react.component
     let make = (
-      ~name: string,
-      ~lens: Optic.Lens.t<values, 'value>,
-      ~children: children<'value>,
-      ~label: option<string>=?,
-      ~errorLabel: option<string>=?,
-      ~onBlur: option<ReactEvent.Focus.t => unit>=?,
-      ~onChange: option<'value => unit>=?,
-      ~onFocus: option<ReactEvent.Focus.t => unit>=?,
-      ~validations: option<array<Validations.t<values, 'value, error>>>=?,
-      ~disable: option<bool>=?,
+      ~name,
+      ~lens,
+      ~label=?,
+      ~errorLabel=?,
+      ~onBlur=?,
+      ~onChange=?,
+      ~onFocus=?,
+      ~validations=?,
+      ~disable=?,
+      ~children,
     ) => {
       let ({Context.isDisabled: isDisabled, fields, values}, modifiers) = React.useContext(context)
 
@@ -409,35 +403,35 @@ module Make = (
 
   @react.component
   let make = (
-    ~action: option<string>=?,
-    ~method_: option<FormMethod.t>=?,
-    ~preventDefault: option<bool>=?,
-    ~stopPropagation: option<bool>=?,
-    ~className: option<string>=?,
-    ~disable: option<bool>=?,
-    ~children: React.element,
+    ~action=?,
+    ~method_=?,
+    ~preventDefault=?,
+    ~stopPropagation=?,
+    ~className=?,
+    ~disable=?,
+    ~onSubmit=?,
+    ~children,
   ) => {
     let (_, {Context.setIsDisabled: setIsDisabled}) = React.useContext(context)
     let disable = disable->Option.getWithDefault(false)
-    let {Hook.submit: submit} = use()
 
     React.useEffect1(() => {
       setIsDisabled(disable)
       None
     }, [disable])
 
-    ReactDOMRe.createElement(
-      "form",
-      /* The ReactDOM.props function accepts only a `method` argument
-       which doesn't compile, hence the following hack */
-      ~props=Obj.magic({
-        "className": className,
-        "action": action,
-        "_method": method_->Option.map(FormMethod.toString),
-        "onSubmit": Events.handle'(~preventDefault?, ~stopPropagation?, submit),
-      }),
-      [children],
-    )
+    <form
+      ?className
+      ?action
+      method=?{method_->Option.map(FormMethod.toString)}
+      onSubmit={Events.handle(~preventDefault?, ~stopPropagation?, () =>
+        switch onSubmit {
+        | None => ignore()
+        | Some(submit) => ignore(submit())
+        }
+      )}>
+      children
+    </form>
   }
 }
 
@@ -447,24 +441,35 @@ let make = (
   type values error,
   ~values as module(Values: Values with type t = values),
   ~error as module(Error: Type with type t = error),
-  ~onSubmit=?,
-  ~onSubmitError=?,
-  (),
 ): t<values, error> => {
-  module Handlers = {
-    type error = Error.t
-
-    type values = Values.t
-
-    let onSubmit = onSubmit
-
-    let onSubmitError = onSubmitError
-  }
-  module(Make(Values, Error, Handlers))
+  module(Make(Values, Error))
 }
 
-let use = (~values, ~error, ~onSubmit=?, ~onSubmitError=?, ()) =>
-  React.useMemo0(() => make(~values, ~error, ~onSubmit?, ~onSubmitError?, ()))
+let use = (
+  type values error,
+  ~values: module(Values with type t = values),
+  ~error: module(Type with type t = error),
+  ~onSuccess=?,
+  ~onError=?,
+  (),
+) => {
+  let module(Form) = make(~values, ~error)
 
-let use1 = (~values, ~error, ~onSubmit=?, ~onSubmitError=?) =>
-  React.useMemo1(() => make(~values, ~error, ~onSubmit?, ~onSubmitError?, ()))
+  React.useMemo0(() => {
+    Form.use(~onSuccess?, ~onError?, ())
+  })
+}
+
+let use1 = (
+  type values error,
+  ~values: module(Values with type t = values),
+  ~error: module(Type with type t = error),
+  ~onSuccess=?,
+  ~onError=?,
+) => {
+  let module(Form) = make(~values, ~error)
+
+  React.useMemo1(() => {
+    Form.use(~onSuccess?, ~onError?, ())
+  })
+}

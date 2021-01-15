@@ -17,12 +17,12 @@ let eventTargetValue = event =>
   ->Js.Nullable.toOption
   ->Option.getWithDefault("")
 
-let handle = (~preventDefault=false, ~stopPropagation=false, f, event) => {
+let handleWithValue = (~preventDefault=false, ~stopPropagation=false, f, event) => {
   event->handle_(~preventDefault, ~stopPropagation)
   event->eventTargetValue->f
 }
 
-let handle' = (~preventDefault=false, ~stopPropagation=false, f, event) => {
+let handle = (~preventDefault=false, ~stopPropagation=false, f, event) => {
   handle_(~preventDefault, ~stopPropagation, event)
   f()
 }
