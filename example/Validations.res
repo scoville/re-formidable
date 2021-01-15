@@ -1,7 +1,11 @@
 include Formidable.Validations
 
+module Label = {
+  type t = [#required | #email | #equals]
+}
+
 let required = {
-  Description.names: list{"required"},
+  Description.names: list{#required},
   validator: ({label, value}) =>
     switch value {
     | "" => #error(#error(("required", label)))
@@ -12,7 +16,7 @@ let required = {
 let emailRegEx = %re("/.+@.+/")
 
 let email = {
-  Description.names: list{"email"},
+  Description.names: list{#email},
   validator: ({label, value}) =>
     if emailRegEx->Js.Re.test_(value) {
       #ok(value)
@@ -22,7 +26,7 @@ let email = {
 }
 
 let equals = lens => {
-  Description.names: list{"equals"},
+  Description.names: list{#equals},
   validator: ({label, value, values}) =>
     if lens.Optic.Lens.get(values) == value {
       #ok(value)

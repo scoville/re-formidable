@@ -76,7 +76,7 @@ module States = {
 
 module Props = {
   module Field = {
-    type t<'value, 'error> = {
+    type t<'value, 'error, 'validationLabel> = {
       isDisabled: bool,
       isFocused: bool,
       label: option<string>,
@@ -87,7 +87,7 @@ module Props = {
       setStatus: States.Field.Status.t<'error> => unit,
       status: States.Field.Status.t<'error>,
       validate: unit => unit,
-      hasValidation: string => bool,
+      hasValidation: 'validationLabel => bool,
       value: 'value,
     }
   }
@@ -140,6 +140,8 @@ module type Form = {
 
   type error
 
+  type validationLabel
+
   let use: (
     ~onSuccess: values => unit=?,
     ~onError: (values, array<error>) => unit=?,
@@ -159,7 +161,7 @@ module type Form = {
   }
 
   module Field: {
-    type children<'value> = Props.Field.t<'value, error> => React.element
+    type children<'value> = Props.Field.t<'value, error, validationLabel> => React.element
 
     @react.component
     let make: (
@@ -170,7 +172,7 @@ module type Form = {
       ~onBlur: ReactEvent.Focus.t => unit=?,
       ~onChange: 'value => unit=?,
       ~onFocus: ReactEvent.Focus.t => unit=?,
-      ~validations: array<Validations.t<values, 'value, error>>=?,
+      ~validations: array<Validations.t<values, 'value, error, validationLabel>>=?,
       ~disable: bool=?,
       ~children: children<'value>,
     ) => React.element
@@ -189,12 +191,17 @@ module type Form = {
   ) => React.element
 }
 
-module Make = (Values: Values, Error: Type): (
-  Form with type values = Values.t and type error = Error.t
+module Make = (Values: Values, Error: Type, ValidationLabel: Type): (
+  Form
+    with type values = Values.t
+    and type error = Error.t
+    and type validationLabel = ValidationLabel.t
 ) => {
   type error = Error.t
 
   type values = Values.t
+
+  type validationLabel = ValidationLabel.t
 
   let context = React.createContext((
     {
@@ -285,7 +292,7 @@ module Make = (Values: Values, Error: Type): (
   }
 
   module Field = {
-    type children<'value> = Props.Field.t<'value, error> => React.element
+    type children<'value> = Props.Field.t<'value, error, validationLabel> => React.element
 
     @react.component
     let make = (
@@ -435,25 +442,31 @@ module Make = (Values: Values, Error: Type): (
   }
 }
 
-type t<'values, 'error> = module(Form with type error = 'error and type values = 'values)
+type t<'values, 'error, 'validationLabel> = module(Form with
+  type error = 'error
+  and type values = 'values
+  and type validationLabel = 'validationLabel
+)
 
 let make = (
-  type values error,
+  type values error validationLabel,
   ~values as module(Values: Values with type t = values),
   ~error as module(Error: Type with type t = error),
-): t<values, error> => {
-  module(Make(Values, Error))
+  ~validationLabel as module(ValidationLabel: Type with type t = validationLabel),
+): t<values, error, validationLabel> => {
+  module(Make(Values, Error, ValidationLabel))
 }
 
 let use = (
-  type values error,
+  type values error validationLabel,
   ~values: module(Values with type t = values),
   ~error: module(Type with type t = error),
+  ~validationLabel: module(Type with type t = validationLabel),
   ~onSuccess=?,
   ~onError=?,
   (),
 ) => {
-  let module(Form) = make(~values, ~error)
+  let module(Form) = make(~values, ~error, ~validationLabel)
 
   React.useMemo0(() => {
     Form.use(~onSuccess?, ~onError?, ())
@@ -461,13 +474,14 @@ let use = (
 }
 
 let use1 = (
-  type values error,
+  type values error validationLabel,
   ~values: module(Values with type t = values),
   ~error: module(Type with type t = error),
+  ~validationLabel: module(Type with type t = validationLabel),
   ~onSuccess=?,
   ~onError=?,
 ) => {
-  let module(Form) = make(~values, ~error)
+  let module(Form) = make(~values, ~error, ~validationLabel)
 
   React.useMemo1(() => {
     Form.use(~onSuccess?, ~onError?, ())
