@@ -19,13 +19,11 @@ module Values = {
   }
 }
 
-// It's pretty easy to have a generic form maker
-// for when a the same value set and errors are used in different context
-let makeForm = Formidable.make(~values=module(Values), ~error=module(I18n.Error))
-
-// In this example, we'll use the hook contained in the module so we need to define it at the top level
-// In many cases, it's not needed, especially thanks to the Consumer component
-module Form = unpack(makeForm(~onSubmit=_values => (), ~onSubmitError=(_values, _errors) => (), ()))
+// In this example we define our form module at the top level using a Functor,
+// but in some cases you can simply use the hook provided by Formidable
+// or define your form at runtime using the make function
+// All the above solutions come with pros and cons
+module Form = Formidable.Make(Values, I18n.Error)
 
 open Validations
 
@@ -39,10 +37,13 @@ let passwordConfirmValidations = [(#onChange, equals(Values.password))]
 module Child = {
   @react.component
   let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
-    // Most of the time, the hook will be useless
-    let {Formidable.Hook.reset: reset, state: {values: {Values.email: email}}} = Form.use()
+    let {Formidable.Hook.reset: reset, state: {values: {Values.email: email}}, submit} = Form.use(
+      ~onSuccess=values => Js.log2("Success: ", values),
+      ~onError=(values, errors) => Js.log3("Error: ", errors, values),
+      (),
+    )
 
-    <Form preventDefault=true>
+    <Form preventDefault=true onSubmit=submit>
       <div> {("Email address: " ++ email)->React.string} </div>
       <div> {"Form"->React.string} </div>
       <Form.Field
@@ -96,7 +97,7 @@ module Child = {
       </Form.Field>
       <Test id="submit"> <button type_="submit"> {"Submit"->React.string} </button> </Test>
       <Test id="reset">
-        <button type_="button" onClick={Formidable.Events.handle'(reset)}>
+        <button type_="button" onClick={Formidable.Events.handle(reset)}>
           {"Reset"->React.string}
         </button>
       </Test>
@@ -105,12 +106,11 @@ module Child = {
 }
 
 @react.component
-let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
+let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) =>
   <Form.Provider>
     <Form.Consumer>
-      {({state: {values}}) =>
+      {({values}) =>
         ("Email address' length: " ++ Int.toString(String.length(values.email)))->React.string}
     </Form.Consumer>
     <Child ?onInputBlur ?onInputChange ?onInputFocus />
   </Form.Provider>
-}
