@@ -44,24 +44,46 @@ let passwordConfirmValidations = [(#onChange, equals(Values.password))]
 module Child = {
   @react.component
   let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
-    let {Formidable.Hook.reset: reset, state: {values: {Values.email: email}}, submit} = Form.use(
+    let {
+      Formidable.Hook.reset: reset,
+      state: {values: {Values.email: email}},
+      setFieldStatus,
+      submit,
+    } = Form.use(
       ~onSuccess=values => Js.log2("Success: ", values),
       ~onError=(values, errors) => Js.log3("Error: ", errors, values),
       (),
     )
 
+    let (emailValidationResponse, checkEmailUniqueness) = FakeFetch.useFetch(~path="/email/exists")
+
+    React.useEffect1(() => {
+      switch emailValidationResponse {
+      | Init | Loading => ignore()
+      | Data(_) => setFieldStatus("email", #valid)
+      | Error(_) => setFieldStatus("email", #errors([#error("email", Some("already exists"))]))
+      }
+
+      None
+    }, [emailValidationResponse])
+
     <Form preventDefault=true onSubmit=submit>
-      <div> {("Email address: " ++ email)->React.string} </div>
+      <div> {`Email address: ${email}`->React.string} </div>
       <div> {"Form"->React.string} </div>
       <Form.Field
         name="email"
-        onBlur=?onInputBlur
+        onBlur={event => {
+          // Async check email uniqueness
+          checkEmailUniqueness(~body=Js.Dict.fromArray([("email", email)]))
+
+          onInputBlur->Option.forEach(onInputBlur => onInputBlur(event))
+        }}
         onChange=?onInputChange
         onFocus=?onInputFocus
         label="Email"
         lens=Values.email
         validations=emailValidations>
-        {field => <TextInput field />}
+        {field => <TextInput field validating={emailValidationResponse == Loading} />}
       </Form.Field>
       <Form.Field
         name="password"
@@ -117,7 +139,7 @@ let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) =>
   <Form.Provider>
     <Form.Consumer>
       {({values}) =>
-        ("Email address' length: " ++ Int.toString(String.length(values.email)))->React.string}
+        `Email address' length: ${Int.toString(String.length(values.email))}`->React.string}
     </Form.Consumer>
     <Child ?onInputBlur ?onInputChange ?onInputFocus />
   </Form.Provider>

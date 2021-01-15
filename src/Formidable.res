@@ -101,13 +101,13 @@ module Context = {
   }
 
   type modifiers<'values, 'error> = {
-    removeField: Map.String.key => unit,
+    removeField: string => unit,
     setIsDisabled: bool => unit,
-    setField: (Map.String.key, States.Field.t<'values, 'error>) => unit,
+    setField: (string, States.Field.t<'values, 'error>) => unit,
     setFields: Map.String.t<States.Field.t<'values, 'error>> => unit,
     setValues: 'values => unit,
     updateField: (
-      Map.String.key,
+      string,
       States.Field.t<'values, 'error> => States.Field.t<'values, 'error>,
     ) => unit,
   }
@@ -118,6 +118,7 @@ module Context = {
 module Hook = {
   type t<'values, 'error> = {
     reset: unit => unit,
+    setFieldStatus: (string, States.Field.Status.t<'error>) => unit,
     setValues: ('values => 'values) => unit,
     state: Context.state<'values, 'error>,
     submit: unit => Js.Promise.t<Map.String.t<States.Field.t<'values, 'error>>>,
@@ -222,7 +223,7 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
   let use = (~onSuccess=?, ~onError=?, ()) => {
     let (
       {Context.fields: fields, values} as state,
-      {Context.setFields: setFields, setValues},
+      {Context.setFields: setFields, setValues, updateField},
     ) = React.useContext(context)
 
     let reset = () => {
@@ -249,7 +250,13 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
       Js.Promise.resolve(fields)
     }
 
-    {Hook.reset: reset, setValues: setValues, state: state, submit: submit}
+    {
+      Hook.reset: reset,
+      setFieldStatus: (name, status) => updateField(name, field => {...field, status: status}),
+      setValues: setValues,
+      state: state,
+      submit: submit,
+    }
   }
 
   module Provider = {

@@ -188,7 +188,7 @@ describe("Formidable", () => {
     })
 
     test("On change listener", () => {
-      let (spy, onChange) = Handler.make(value => "changed: " ++ value)
+      let (spy, onChange) = Handler.make(value => `changed: ${value}`)
 
       let app = renderApp(~onChange, ())
 
