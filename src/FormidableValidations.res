@@ -27,10 +27,17 @@ module Validator = {
 }
 
 module Description = {
-  type t<'values, 'value, 'error, 'label> = {
-    names: list<'label>,
-    validator: Validator.t<'values, 'value, 'error>,
-  }
+  @ocaml.doc(`Only the first "kind" is meant to be used by an application.
+The second one is used only internally when composing validations`)
+  type kind<'label> = [#name('label) | #names(array<'label>)]
+
+  let resolveKind = (kind: kind<'label>) =>
+    switch kind {
+    | #name(label) => [label]
+    | #names(labels) => labels
+    }
+
+  type t<'values, 'value, 'error, 'label> = (kind<'label>, Validator.t<'values, 'value, 'error>)
 }
 
 type t<'values, 'value, 'error, 'label> = (
@@ -38,23 +45,20 @@ type t<'values, 'value, 'error, 'label> = (
   Description.t<'values, 'value, 'error, 'label>,
 )
 
-let compose = (
-  {Description.names: names, validator},
-  {Description.names: names', validator: validator'},
-) => {
-  Description.names: names->List.concat(names'),
-  validator: field =>
+let compose = ((names, validator), (names', validator')) => (
+  names->Description.resolveKind->Js.Array2.concat(names'->Description.resolveKind)->#names,
+  field =>
     switch validator(field) {
     | #ok(_) => validator'(field)
     | #error(_) as error => error
     },
-}
+)
 
 let getStrategy = ((strategy, _)) => strategy
 
-let getNames = ((_, {Description.names: names})) => names
+let getNames = ((_, (names, _))) => names->Description.resolveKind
 
-let getValidator = ((_, {Description.validator: validator})) => validator
+let getValidator = ((_, (_, validator))) => validator
 
 @ocaml.doc(`Returns true if a validation should be performed in the given context.
 If no context is provided, always returns true`)
