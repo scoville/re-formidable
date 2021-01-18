@@ -49,6 +49,8 @@ let emailAlreadyExistsError: I18n.Error.t = #error("email", Some("already exists
 module Child = {
   @react.component
   let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
+    let (emailValidationResponse, checkEmailUniqueness) = FakeFetch.useFetch(~path="/email/exists")
+
     let {
       addError,
       removeError,
@@ -56,13 +58,22 @@ module Child = {
       state: {values: {email, hobbies}},
       setValues,
       submit,
-    } = Form.use(
-      ~onSuccess=values => Js.log2("Success: ", values),
-      ~onError=(values, errors) => Js.log3("Error: ", errors, values),
-      (),
-    )
+    } as form = Form.use()
 
-    let (emailValidationResponse, checkEmailUniqueness) = FakeFetch.useFetch(~path="/email/exists")
+    Form.useOnSubmitSuccess(~form, (~values) => Js.log2("Success: ", values))
+
+    Form.useOnSubmitError(~form, (~values, ~errors) => Js.log3("Error: ", errors, values))
+
+    // The above hooks are simple wrappers for the native useEffect hook:
+    // React.useEffect1(() => {
+    //   switch formStatus {
+    //   | #pristine | #touched => ignore()
+    //   | #submitted(#valid(values)) => Js.log2("Success: ", values)
+    //   | #submitted(#errors(values, errors)) => Js.log3("Error: ", errors, values)
+    //   }
+
+    //   None
+    // }, [formStatus]) // formStatus is returned by the hook under the `computedState` property
 
     React.useEffect1(() => {
       switch emailValidationResponse {
@@ -73,6 +84,9 @@ module Child = {
 
       None
     }, [emailValidationResponse])
+
+    let addHobby = () =>
+      setValues(values => {...values, hobbies: values.hobbies->Js.Array2.concat([""])})
 
     <Form preventDefault=true onSubmit=submit>
       <div> {`Email address: ${email}`->React.string} </div>
@@ -134,6 +148,7 @@ module Child = {
       {hobbies
       ->Array.mapWithIndex((index, _hobby) =>
         <Form.Field
+          key={index->Int.toString}
           name={`hobby-${index->Int.toString}`}
           onBlur=?onInputBlur
           onChange=?onInputChange
@@ -144,14 +159,11 @@ module Child = {
         </Form.Field>
       )
       ->React.array}
-      <button
-        type_="button"
-        onClick={_ =>
-          setValues(values => {...values, hobbies: values.hobbies->Js.Array2.concat([""])})}>
+      <button type_="button" onClick={Formidable.Events.handleAndIgnore(addHobby)}>
         {"Add Hobby"->React.string}
       </button>
       <Test id="reset">
-        <button type_="button" onClick={Formidable.Events.handle(reset)}>
+        <button type_="button" onClick={Formidable.Events.handleAndIgnore(reset)}>
           {"Reset"->React.string}
         </button>
       </Test>

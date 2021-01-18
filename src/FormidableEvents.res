@@ -22,7 +22,12 @@ let handleWithValue = (~preventDefault=false, ~stopPropagation=false, f, event) 
   event->eventTargetValue->f
 }
 
-let handle = (~preventDefault=false, ~stopPropagation=false, f, event) => {
+let handleAndIgnore = (~preventDefault=false, ~stopPropagation=false, f, event) => {
   handle_(~preventDefault, ~stopPropagation, event)
   f()
+}
+
+let handle = (~preventDefault=false, ~stopPropagation=false, f, event) => {
+  handle_(~preventDefault, ~stopPropagation, event)
+  f(event)
 }
