@@ -58,20 +58,22 @@ module States = {
     let reset = field => {...field, status: #pristine}
   }
 
-  let isPristine = fields => fields->Map.String.every(_ => Field.isPristine)
+  module Form = {
+    let isPristine = fields => fields->Map.String.every(_ => Field.isPristine)
 
-  let isValid = fields => fields->Map.String.every(_ => Field.isValid)
+    let isValid = fields => fields->Map.String.every(_ => Field.isValid)
 
-  let isTouched = fields => fields->Map.String.some(_ => Field.isTouched)
+    let isTouched = fields => fields->Map.String.some(_ => Field.isTouched)
 
-  let hasErrors = fields => fields->Map.String.some(_ => Field.hasErrors)
+    let hasErrors = fields => fields->Map.String.some(_ => Field.hasErrors)
 
-  let getErrors = fields =>
-    fields->Map.String.reduce([], (acc, _, field) =>
-      field->Field.getErrors->Option.mapWithDefault(acc, errors => acc->Js.Array2.concat(errors))
-    )
+    let getErrors = fields =>
+      fields->Map.String.reduce([], (acc, _, field) =>
+        field->Field.getErrors->Option.mapWithDefault(acc, errors => acc->Js.Array2.concat(errors))
+      )
 
-  let reset = fields => fields->Map.String.map(Field.reset)
+    let reset = fields => fields->Map.String.map(Field.reset)
+  }
 }
 
 module Props = {
@@ -229,7 +231,7 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
     ) = React.useContext(context)
 
     let reset = () => {
-      setFields(States.reset(fields))
+      setFields(States.Form.reset(fields))
       setValues(Values.init)
     }
 
@@ -267,7 +269,7 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
         status: validate(None, values),
       })
 
-      switch (States.getErrors(fields), onSuccess, onError) {
+      switch (States.Form.getErrors(fields), onSuccess, onError) {
       | ([], Some(onSuccess), _) => onSuccess(values)
       | (errors, _, Some(onError)) => onError(values, errors)
       | _ => ()
