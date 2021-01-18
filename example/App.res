@@ -8,6 +8,7 @@ module Values = {
     password: string,
     passwordConfirm: string,
     email: string,
+    hobbies: array<string>,
   }
 
   let init = {
@@ -16,6 +17,7 @@ module Values = {
     password: "",
     passwordConfirm: "",
     email: "",
+    hobbies: [""],
   }
 }
 
@@ -41,27 +43,54 @@ let emailValidations = [(#onChange, required->compose(email))]
 
 let passwordConfirmValidations = [(#onChange, equals(Values.password))]
 
+// The error appended to the email when it already exists
+let emailAlreadyExistsError: I18n.Error.t = #error("email", Some("already exists"))
+
 module Child = {
   @react.component
   let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
-    let {Formidable.Hook.reset: reset, state: {values: {Values.email: email}}, submit} = Form.use(
+    let {
+      addError,
+      removeError,
+      reset,
+      state: {values: {email, hobbies}},
+      setValues,
+      submit,
+    } = Form.use(
       ~onSuccess=values => Js.log2("Success: ", values),
       ~onError=(values, errors) => Js.log3("Error: ", errors, values),
       (),
     )
 
+    let (emailValidationResponse, checkEmailUniqueness) = FakeFetch.useFetch(~path="/email/exists")
+
+    React.useEffect1(() => {
+      switch emailValidationResponse {
+      | Init | Loading => ignore()
+      | Data(_) => removeError("email", emailAlreadyExistsError)
+      | Error(_) => addError("email", emailAlreadyExistsError)
+      }
+
+      None
+    }, [emailValidationResponse])
+
     <Form preventDefault=true onSubmit=submit>
-      <div> {("Email address: " ++ email)->React.string} </div>
+      <div> {`Email address: ${email}`->React.string} </div>
       <div> {"Form"->React.string} </div>
       <Form.Field
         name="email"
-        onBlur=?onInputBlur
+        onBlur={event => {
+          // Async check email uniqueness
+          checkEmailUniqueness(~body=Js.Dict.fromArray([("email", email)]))
+
+          onInputBlur->Option.forEach(onInputBlur => onInputBlur(event))
+        }}
         onChange=?onInputChange
         onFocus=?onInputFocus
         label="Email"
         lens=Values.email
         validations=emailValidations>
-        {field => <TextInput field />}
+        {field => <TextInput field validating={emailValidationResponse == Loading} />}
       </Form.Field>
       <Form.Field
         name="password"
@@ -102,12 +131,31 @@ module Child = {
         lens=Values.age>
         {field => <TextInput field />}
       </Form.Field>
-      <Test id="submit"> <button type_="submit"> {"Submit"->React.string} </button> </Test>
+      {hobbies
+      ->Array.mapWithIndex((index, _hobby) =>
+        <Form.Field
+          name={`hobby-${index->Int.toString}`}
+          onBlur=?onInputBlur
+          onChange=?onInputChange
+          onFocus=?onInputFocus
+          label={`Hobby - ${(index + 1)->Int.toString}`}
+          lens={Values.hobbies->Optic.Lens.compose(Optic.Common.Array.indexExn(index))}>
+          {field => <TextInput field />}
+        </Form.Field>
+      )
+      ->React.array}
+      <button
+        type_="button"
+        onClick={_ =>
+          setValues(values => {...values, hobbies: values.hobbies->Js.Array2.concat([""])})}>
+        {"Add Hobby"->React.string}
+      </button>
       <Test id="reset">
         <button type_="button" onClick={Formidable.Events.handle(reset)}>
           {"Reset"->React.string}
         </button>
       </Test>
+      <Test id="submit"> <button type_="submit"> {"Submit"->React.string} </button> </Test>
     </Form>
   }
 }
@@ -117,7 +165,7 @@ let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) =>
   <Form.Provider>
     <Form.Consumer>
       {({values}) =>
-        ("Email address' length: " ++ Int.toString(String.length(values.email)))->React.string}
+        `Email address' length: ${Int.toString(String.length(values.email))}`->React.string}
     </Form.Consumer>
     <Child ?onInputBlur ?onInputChange ?onInputFocus />
   </Form.Provider>

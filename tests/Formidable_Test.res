@@ -10,6 +10,8 @@ describe("Formidable", () => {
   })
 
   describe("Field (example: email)", () => {
+    let existingEmail = "already@exists.com"
+
     let wrongEmail = "foobar.com"
 
     let validEmail = "foo@bar.com"
@@ -25,19 +27,49 @@ describe("Formidable", () => {
     test("Change focus status - focus", () => {
       let app = renderApp()
 
-      app->email.input->FireEvent.focus
+      act(() => app->email.input->FireEvent.focus)
 
       email.expectToMatchSnapshot(app)
     })
 
-    test("Change focus status and trigger required error - focus then blur", () => {
+    test(
+      "Change focus status and trigger only displays loading/validating message - focus, then blur",
+      () => {
+        let app = renderApp()
+
+        act(() => app->email.input->FireEvent.focus)
+
+        act(() => app->email.input->FireEvent.blur)
+
+        email.expectToMatchSnapshot(app)
+      },
+    )
+
+    testAsync(
+      "Change focus status and trigger already exists error - focus, type email address, then blur",
+      done => {
+        let app = renderApp()
+
+        act(() => app->email.input->FireEvent.focus)
+
+        act(() =>
+          app->email.input->FireEvent.input(~eventInit={"target": {"value": existingEmail}})
+        )
+
+        act(() => app->email.input->FireEvent.blur)
+
+        Js.Global.setTimeout(() => done(email.expectToMatchSnapshot(app)), 300)->ignore
+      },
+    )
+
+    testAsync("Change focus status and trigger required error - focus then blur", done => {
       let app = renderApp()
 
-      app->email.input->FireEvent.focus
+      act(() => app->email.input->FireEvent.focus)
 
-      app->email.input->FireEvent.blur
+      act(() => app->email.input->FireEvent.blur)
 
-      email.expectToMatchSnapshot(app)
+      Js.Global.setTimeout(() => done(email.expectToMatchSnapshot(app)), 300)->ignore
     })
 
     test("Email format error", () => {
@@ -51,7 +83,6 @@ describe("Formidable", () => {
             "value": wrongEmail,
           },
         },
-        _,
       )
 
       email.expectToMatchSnapshot(app)
@@ -60,15 +91,16 @@ describe("Formidable", () => {
     test("Updates value", () => {
       let app = renderApp()
 
-      app
-      ->email.input
-      ->FireEvent.input(
-        ~eventInit={
-          "target": {
-            "value": validEmail,
+      act(() =>
+        app
+        ->email.input
+        ->FireEvent.input(
+          ~eventInit={
+            "target": {
+              "value": validEmail,
+            },
           },
-        },
-        _,
+        )
       )
 
       email.expectToMatchSnapshot(app)
@@ -77,7 +109,7 @@ describe("Formidable", () => {
     test("Submit errors", () => {
       let app = renderApp()
 
-      app->submitButton->FireEvent.click
+      act(() => app->submitButton->FireEvent.click)
 
       email.expectToMatchSnapshot(app)
     })
@@ -85,9 +117,9 @@ describe("Formidable", () => {
     test("Submit and reset", () => {
       let app = renderApp()
 
-      app->submitButton->FireEvent.click
+      act(() => app->submitButton->FireEvent.click)
 
-      app->resetButton->FireEvent.click
+      act(() => app->resetButton->FireEvent.click)
 
       email.expectToMatchSnapshot(app)
     })
@@ -95,18 +127,19 @@ describe("Formidable", () => {
     test("Submit with errors", () => {
       let app = renderApp()
 
-      app
-      ->email.input
-      ->FireEvent.input(
-        ~eventInit={
-          "target": {
-            "value": wrongEmail,
+      act(() =>
+        app
+        ->email.input
+        ->FireEvent.input(
+          ~eventInit={
+            "target": {
+              "value": wrongEmail,
+            },
           },
-        },
-        _,
+        )
       )
 
-      app->submitButton->FireEvent.click
+      act(() => app->submitButton->FireEvent.click)
 
       email.expectToMatchSnapshot(app)
     })
@@ -116,7 +149,7 @@ describe("Formidable", () => {
 
       let app = renderApp()
 
-      app->email.input->FireEvent.focus
+      act(() => app->email.input->FireEvent.focus)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -134,7 +167,7 @@ describe("Formidable", () => {
 
       let app = renderApp(~onFocus, ())
 
-      app->email.input->FireEvent.blur
+      act(() => app->email.input->FireEvent.blur)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -144,7 +177,7 @@ describe("Formidable", () => {
 
       let app = renderApp(~onFocus, ())
 
-      app->email.input->FireEvent.focus
+      act(() => app->email.input->FireEvent.focus)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -154,7 +187,7 @@ describe("Formidable", () => {
 
       let app = renderApp()
 
-      app->email.input->FireEvent.blur
+      act(() => app->email.input->FireEvent.blur)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -172,7 +205,7 @@ describe("Formidable", () => {
 
       let app = renderApp(~onBlur, ())
 
-      app->email.input->FireEvent.focus
+      act(() => app->email.input->FireEvent.focus)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -182,47 +215,50 @@ describe("Formidable", () => {
 
       let app = renderApp(~onBlur, ())
 
-      app->email.input->FireEvent.blur
+      act(() => app->email.input->FireEvent.blur)
 
       Handler.expectToMatchSnapshot(spy)
     })
 
     test("On change listener", () => {
-      let (spy, onChange) = Handler.make(value => "changed: " ++ value)
+      let (spy, onChange) = Handler.make(value => `changed: ${value}`)
 
       let app = renderApp(~onChange, ())
 
-      app
-      ->email.input
-      ->FireEvent.input(
-        ~eventInit={
-          "target": {
-            "value": "foo@",
+      act(() =>
+        app
+        ->email.input
+        ->FireEvent.input(
+          ~eventInit={
+            "target": {
+              "value": "foo@",
+            },
           },
-        },
-        _,
+        )
       )
 
-      app
-      ->email.input
-      ->FireEvent.input(
-        ~eventInit={
-          "target": {
-            "value": "bar.",
+      act(() =>
+        app
+        ->email.input
+        ->FireEvent.input(
+          ~eventInit={
+            "target": {
+              "value": "bar.",
+            },
           },
-        },
-        _,
+        )
       )
 
-      app
-      ->email.input
-      ->FireEvent.input(
-        ~eventInit={
-          "target": {
-            "value": "com",
+      act(() =>
+        app
+        ->email.input
+        ->FireEvent.input(
+          ~eventInit={
+            "target": {
+              "value": "com",
+            },
           },
-        },
-        _,
+        )
       )
 
       Handler.expectToMatchSnapshot(spy)

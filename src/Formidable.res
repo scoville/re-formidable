@@ -101,13 +101,13 @@ module Context = {
   }
 
   type modifiers<'values, 'error> = {
-    removeField: Map.String.key => unit,
+    removeField: string => unit,
     setIsDisabled: bool => unit,
-    setField: (Map.String.key, States.Field.t<'values, 'error>) => unit,
+    setField: (string, States.Field.t<'values, 'error>) => unit,
     setFields: Map.String.t<States.Field.t<'values, 'error>> => unit,
     setValues: 'values => unit,
     updateField: (
-      Map.String.key,
+      string,
       States.Field.t<'values, 'error> => States.Field.t<'values, 'error>,
     ) => unit,
   }
@@ -117,7 +117,10 @@ module Context = {
 
 module Hook = {
   type t<'values, 'error> = {
+    addError: (string, 'error) => unit,
+    removeError: (string, 'error) => unit,
     reset: unit => unit,
+    setFieldStatus: (string, States.Field.Status.t<'error>) => unit,
     setValues: ('values => 'values) => unit,
     state: Context.state<'values, 'error>,
     submit: unit => Js.Promise.t<Map.String.t<States.Field.t<'values, 'error>>>,
@@ -222,7 +225,7 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
   let use = (~onSuccess=?, ~onError=?, ()) => {
     let (
       {Context.fields: fields, values} as state,
-      {Context.setFields: setFields, setValues},
+      {Context.setFields: setFields, setValues, updateField},
     ) = React.useContext(context)
 
     let reset = () => {
@@ -231,6 +234,32 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
     }
 
     let setValues = f => setValues(f(values))
+
+    let updateFieldStatus = (name, f) =>
+      updateField(name, field => {...field, status: f(field.status)})
+
+    let setFieldStatus = (name, status) => updateFieldStatus(name, _ => status)
+
+    let addError = (name, error) =>
+      updateFieldStatus(name, status => {
+        switch status {
+        | #touched | #pristine | #valid => #errors([error])
+        | #errors(errors) when errors->Js.Array2.includes(error) => status
+        | #errors(errors) => errors->Js.Array2.concat([error])->#errors
+        }
+      })
+
+    let removeError = (name, error) =>
+      updateFieldStatus(name, status =>
+        switch status {
+        | #touched | #pristine | #valid => status
+        | #errors(errors) =>
+          switch errors->Js.Array2.filter(error' => error != error') {
+          | [] => #valid
+          | errors => #errors(errors)
+          }
+        }
+      )
 
     let submit = () => {
       let fields = fields->Map.String.map(({States.Field.validate: validate} as field) => {
@@ -249,7 +278,15 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
       Js.Promise.resolve(fields)
     }
 
-    {Hook.reset: reset, setValues: setValues, state: state, submit: submit}
+    {
+      Hook.addError: addError,
+      removeError: removeError,
+      reset: reset,
+      setFieldStatus: setFieldStatus,
+      setValues: setValues,
+      state: state,
+      submit: submit,
+    }
   }
 
   module Provider = {
@@ -377,6 +414,7 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
         onChange'->Option.forEach(onChange' => onChange'(Optic.Lens.get(lens, values)))
 
         modifiers.setValues(values)
+
         validateAndUpdate(Some(#onChange), values)
       }
 

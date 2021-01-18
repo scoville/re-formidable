@@ -9,7 +9,7 @@ module Errors = {
     <div style={ReactDOMStyle.make(~color="red", ())}>
       {value
       ->Array.map((#error(name, _) as error) =>
-        <div key=name> {("Field has errors: " ++ I18n.translate(error))->React.string} </div>
+        <div key=name> {`Field has errors: ${I18n.translate(error)}`->React.string} </div>
       )
       ->React.array}
     </div>
@@ -18,15 +18,19 @@ module Errors = {
 
 module Status = {
   @react.component
-  let make = (~value) =>
-    <div>
-      {switch value {
-      | #pristine => "Field is pristine"->React.string
-      | #touched => "Field is touched"->React.string
-      | #valid => "Field is valid"->React.string
-      | #errors(errors) => <Errors value=errors />
-      }}
-    </div>
+  let make = (~validating, ~value) =>
+    if validating {
+      <div> {"Validating..."->React.string} </div>
+    } else {
+      <div>
+        {switch value {
+        | #pristine => "Field is pristine"->React.string
+        | #touched => "Field is touched"->React.string
+        | #valid => "Field is valid"->React.string
+        | #errors(errors) => <Errors value=errors />
+        }}
+      </div>
+    }
 }
 
 module Label = {
@@ -57,12 +61,13 @@ module TextInput = {
       hasValidation,
       value,
     }: Formidable.Props.Field.t<_, _, Validations.Label.t>,
+    ~validating=false,
   ) =>
     <div>
       <Label required={hasValidation(#required)} value=label />
       <Test id=name>
         <input
-          disabled=isDisabled
+          disabled={isDisabled || validating}
           name
           onBlur
           onChange={Formidable.Events.handleWithValue(onChange)}
@@ -71,7 +76,7 @@ module TextInput = {
         />
       </Test>
       <div> {(isFocused ? "Focus" : "Blur")->React.string} </div>
-      <Status value=status />
+      <Status validating value=status />
     </div>
   )
 }
