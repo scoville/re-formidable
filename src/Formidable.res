@@ -3,12 +3,16 @@ open FormidableExtra
 module Events = FormidableEvents
 module Validations = FormidableValidations
 
-module type Type = {
-  type t
+module type Error = {
+  include Id.Comparable
+}
+
+module type ValidationLabel = {
+  include Id.Comparable
 }
 
 module type Values = {
-  include Type
+  type t
 
   let init: t
 }
@@ -210,7 +214,7 @@ module type Form = {
   ) => React.element
 }
 
-module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
+module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): (
   Form
     with type values = Values.t
     and type error = Error.t
@@ -262,7 +266,10 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
       updateFieldStatus(name, status => {
         switch status {
         | #touched | #pristine | #valid => #errors([error])
-        | #errors(errors) when errors->Js.Array2.includes(error) => status
+        | #errors(errors)
+          when errors->Js.Array2.some(error' =>
+            Id.getCmpInternal(Error.cmp)(. error, error') == 0
+          ) => status
         | #errors(errors) => errors->Js.Array2.concat([error])->#errors
         }
       })
@@ -394,7 +401,10 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
           validations->ArrayExtra.flatMap(Validations.getNames)
         )
 
-      let hasValidation = name => validationNames->Js.Array2.includes(name)
+      let hasValidation = name =>
+        validationNames->Js.Array2.some(name' =>
+          Id.getCmpInternal(ValidationLabel.cmp)(. name, name') == 0
+        )
 
       let validate = React.useCallback1((validationContext, values) =>
         validations->Option.mapWithDefault(#valid, validations =>
@@ -524,8 +534,8 @@ type t<'validationLabel, 'error, 'values> = module(Form with
 
 let make = (
   type validationLabel error values,
-  ~validationLabel as module(ValidationLabel: Type with type t = validationLabel),
-  ~error as module(Error: Type with type t = error),
+  ~validationLabel as module(ValidationLabel: ValidationLabel with type t = validationLabel),
+  ~error as module(Error: Error with type t = error),
   ~values as module(Values: Values with type t = values),
 ): t<validationLabel, error, values> => {
   module(Make(ValidationLabel, Error, Values))
@@ -533,8 +543,8 @@ let make = (
 
 let use = (
   type validationLabel error values,
-  ~validationLabel: module(Type with type t = validationLabel),
-  ~error: module(Type with type t = error),
+  ~validationLabel: module(ValidationLabel with type t = validationLabel),
+  ~error: module(Error with type t = error),
   ~values: module(Values with type t = values),
   ~initFormStatus: option<States.Form.Status.t<values, error>>=?,
   (),
@@ -548,8 +558,8 @@ let use = (
 
 let use1 = (
   type validationLabel error values,
-  ~validationLabel: module(Type with type t = validationLabel),
-  ~error: module(Type with type t = error),
+  ~validationLabel: module(ValidationLabel with type t = validationLabel),
+  ~error: module(Error with type t = error),
   ~values: module(Values with type t = values),
   ~initFormStatus: option<States.Form.Status.t<values, error>>=?,
 ) => {

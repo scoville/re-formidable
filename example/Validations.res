@@ -1,8 +1,10 @@
 include Formidable.Validations
 
-module Label = {
+module Label = Id.MakeComparable({
   type t = [#required | #email | #equals]
-}
+
+  let cmp = Pervasives.compare
+})
 
 let required = (
   #name(#required),
