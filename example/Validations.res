@@ -2,6 +2,8 @@ include Formidable.Validations
 
 module Label = {
   type t = [#required | #email | #equals]
+
+  let eq = (label1, label2) => label1 == label2
 }
 
 let required = (

@@ -8,7 +8,7 @@ module Errors = {
   let make = (~value: array<I18n.Error.t>) => {
     <div style={ReactDOMStyle.make(~color="red", ())}>
       {value
-      ->Array.map((#error(name, _) as error) =>
+      ->Js.Array2.map((#error(name, _) as error) =>
         <div key=name> {`Field has errors: ${I18n.translate(error)}`->React.string} </div>
       )
       ->React.array}
