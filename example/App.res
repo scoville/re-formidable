@@ -8,6 +8,7 @@ module Values = {
     password: string,
     passwordConfirm: string,
     email: string,
+    hobbies: array<string>,
   }
 
   let init = {
@@ -16,6 +17,7 @@ module Values = {
     password: "",
     passwordConfirm: "",
     email: "",
+    hobbies: [""],
   }
 }
 
@@ -47,7 +49,14 @@ let emailAlreadyExistsError: I18n.Error.t = #error("email", Some("already exists
 module Child = {
   @react.component
   let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) => {
-    let {addError, removeError, reset, state: {values: {email}}, submit} = Form.use(
+    let {
+      addError,
+      removeError,
+      reset,
+      state: {values: {email, hobbies}},
+      setValues,
+      submit,
+    } = Form.use(
       ~onSuccess=values => Js.log2("Success: ", values),
       ~onError=(values, errors) => Js.log3("Error: ", errors, values),
       (),
@@ -122,12 +131,31 @@ module Child = {
         lens=Values.age>
         {field => <TextInput field />}
       </Form.Field>
-      <Test id="submit"> <button type_="submit"> {"Submit"->React.string} </button> </Test>
+      {hobbies
+      ->Array.mapWithIndex((index, _hobby) =>
+        <Form.Field
+          name={`hobby-${index->Int.toString}`}
+          onBlur=?onInputBlur
+          onChange=?onInputChange
+          onFocus=?onInputFocus
+          label={`Hobby - ${(index + 1)->Int.toString}`}
+          lens={Values.hobbies->Optic.Lens.compose(Optic.Common.Array.indexExn(index))}>
+          {field => <TextInput field />}
+        </Form.Field>
+      )
+      ->React.array}
+      <button
+        type_="button"
+        onClick={_ =>
+          setValues(values => {...values, hobbies: values.hobbies->Js.Array2.concat([""])})}>
+        {"Add Hobby"->React.string}
+      </button>
       <Test id="reset">
         <button type_="button" onClick={Formidable.Events.handle(reset)}>
           {"Reset"->React.string}
         </button>
       </Test>
+      <Test id="submit"> <button type_="submit"> {"Submit"->React.string} </button> </Test>
     </Form>
   }
 }

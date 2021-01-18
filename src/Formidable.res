@@ -414,6 +414,7 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
         onChange'->Option.forEach(onChange' => onChange'(Optic.Lens.get(lens, values)))
 
         modifiers.setValues(values)
+
         validateAndUpdate(Some(#onChange), values)
       }
 
