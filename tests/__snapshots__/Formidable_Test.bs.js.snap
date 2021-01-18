@@ -105,17 +105,38 @@ exports[`Formidable Component renders 1`] = `
         Field is pristine
       </div>
     </div>
+    <div>
+      <div>
+        Hobby - 1
+      </div>
+      <input
+        data-testid="hobby-0"
+        name="hobby-0"
+        value=""
+      />
+      <div>
+        Blur
+      </div>
+      <div>
+        Field is pristine
+      </div>
+    </div>
     <button
-      data-testid="submit"
-      type="submit"
+      type="button"
     >
-      Submit
+      Add Hobby
     </button>
     <button
       data-testid="reset"
       type="button"
     >
       Reset
+    </button>
+    <button
+      data-testid="submit"
+      type="submit"
+    >
+      Submit
     </button>
   </form>
 </div>

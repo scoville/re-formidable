@@ -59,6 +59,14 @@ module States = {
   }
 
   module Form = {
+    module Status = {
+      type t<'values, 'error> = [
+        | #pristine
+        | #touched
+        | #submitted([#valid('values) | #errors('values, array<'error>)])
+      ]
+    }
+
     let isPristine = fields => fields->Map.String.every(_ => Field.isPristine)
 
     let isValid = fields => fields->Map.String.every(_ => Field.isValid)
@@ -118,14 +126,17 @@ module Context = {
 }
 
 module Hook = {
+  type computedState<'values, 'error> = {formStatus: States.Form.Status.t<'values, 'error>}
+
   type t<'values, 'error> = {
     addError: (string, 'error) => unit,
+    computedState: computedState<'values, 'error>,
     removeError: (string, 'error) => unit,
     reset: unit => unit,
     setFieldStatus: (string, States.Field.Status.t<'error>) => unit,
     setValues: ('values => 'values) => unit,
     state: Context.state<'values, 'error>,
-    submit: unit => Js.Promise.t<Map.String.t<States.Field.t<'values, 'error>>>,
+    submit: ReactEvent.Form.t => unit,
   }
 }
 
@@ -147,11 +158,14 @@ module type Form = {
 
   type validationLabel
 
-  let use: (
-    ~onSuccess: values => unit=?,
-    ~onError: (values, array<error>) => unit=?,
-    unit,
-  ) => Hook.t<values, error>
+  let use: (~initFormStatus: States.Form.Status.t<values, error>=?, unit) => Hook.t<values, error>
+
+  let useOnSubmitSuccess: (~form: Hook.t<values, error>, (~values: values) => unit) => unit
+
+  let useOnSubmitError: (
+    ~form: Hook.t<values, error>,
+    (~values: values, ~errors: array<error>) => unit,
+  ) => unit
 
   module Provider: {
     @react.component
@@ -191,7 +205,7 @@ module type Form = {
     ~stopPropagation: bool=?,
     ~className: string=?,
     ~disable: bool=?,
-    ~onSubmit: unit => Js.Promise.t<Map.String.t<States.Field.t<values, error>>>=?,
+    ~onSubmit: ReactEvent.Form.t => unit=?,
     ~children: React.element,
   ) => React.element
 }
@@ -224,11 +238,13 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
     },
   ))
 
-  let use = (~onSuccess=?, ~onError=?, ()) => {
+  let use = (~initFormStatus=#pristine, ()) => {
     let (
       {Context.fields: fields, values} as state,
       {Context.setFields: setFields, setValues, updateField},
     ) = React.useContext(context)
+
+    let (formStatus, setFormStatus) = React.useState(() => initFormStatus)
 
     let reset = () => {
       setFields(States.Form.reset(fields))
@@ -263,25 +279,23 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
         }
       )
 
-    let submit = () => {
+    let submit = _event => {
       let fields = fields->Map.String.map(({States.Field.validate: validate} as field) => {
         ...field,
         status: validate(None, values),
       })
 
-      switch (States.Form.getErrors(fields), onSuccess, onError) {
-      | ([], Some(onSuccess), _) => onSuccess(values)
-      | (errors, _, Some(onError)) => onError(values, errors)
-      | _ => ()
+      switch States.Form.getErrors(fields) {
+      | [] => setFormStatus(_ => #submitted(#valid(values)))
+      | errors => setFormStatus(_ => #submitted(#errors(values, errors)))
       }
 
       setFields(fields)
-
-      Js.Promise.resolve(fields)
     }
 
     {
       Hook.addError: addError,
+      computedState: {formStatus: formStatus},
       removeError: removeError,
       reset: reset,
       setFieldStatus: setFieldStatus,
@@ -289,6 +303,28 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
       state: state,
       submit: submit,
     }
+  }
+
+  let useOnSubmitSuccess = (~form as {Hook.computedState: {formStatus}}, onSuccess) => {
+    React.useEffect1(() => {
+      switch formStatus {
+      | #submitted(#valid(values)) => onSuccess(~values)
+      | #pristine | #touched | #submitted(#errors(_, _)) => ignore()
+      }
+
+      None
+    }, [formStatus])
+  }
+
+  let useOnSubmitError = (~form as {Hook.computedState: {formStatus}}, onError) => {
+    React.useEffect1(() => {
+      switch formStatus {
+      | #submitted(#errors(values, errors)) => onError(~values, ~errors)
+      | #pristine | #touched | #submitted(#valid(_)) => ignore()
+      }
+
+      None
+    }, [formStatus])
   }
 
   module Provider = {
@@ -469,10 +505,10 @@ module Make = (ValidationLabel: Type, Error: Type, Values: Values): (
       ?className
       ?action
       method=?{method_->Option.map(FormMethod.toString)}
-      onSubmit={Events.handle(~preventDefault?, ~stopPropagation?, () =>
+      onSubmit={Events.handle(~preventDefault?, ~stopPropagation?, event =>
         switch onSubmit {
         | None => ignore()
-        | Some(submit) => ignore(submit())
+        | Some(onSubmit) => ignore(onSubmit(event))
         }
       )}>
       children
@@ -500,14 +536,13 @@ let use = (
   ~validationLabel: module(Type with type t = validationLabel),
   ~error: module(Type with type t = error),
   ~values: module(Values with type t = values),
-  ~onSuccess=?,
-  ~onError=?,
+  ~initFormStatus: option<States.Form.Status.t<values, error>>=?,
   (),
 ) => {
   let module(Form) = make(~validationLabel, ~error, ~values)
 
   React.useMemo0(() => {
-    Form.use(~onSuccess?, ~onError?, ())
+    Form.use(~initFormStatus?, ())
   })
 }
 
@@ -516,12 +551,11 @@ let use1 = (
   ~validationLabel: module(Type with type t = validationLabel),
   ~error: module(Type with type t = error),
   ~values: module(Values with type t = values),
-  ~onSuccess=?,
-  ~onError=?,
+  ~initFormStatus: option<States.Form.Status.t<values, error>>=?,
 ) => {
   let module(Form) = make(~validationLabel, ~error, ~values)
 
   React.useMemo1(() => {
-    Form.use(~onSuccess?, ~onError?, ())
+    Form.use(~initFormStatus?, ())
   })
 }
