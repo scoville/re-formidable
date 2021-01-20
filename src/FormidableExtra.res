@@ -1,5 +1,5 @@
 module ArrayExtra = {
-  let flatMap = (xs, f) => xs->Array.reduce([], (acc, x) => acc->Js.Array2.concat(f(x)))
+  let flatMap = (xs, f) => xs->Js.Array2.reduce((acc, x) => acc->Js.Array2.concat(f(x)), [])
 }
 
 module OptionExtra = {
