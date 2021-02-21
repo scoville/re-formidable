@@ -34,6 +34,10 @@ module MakeForm = Formidable.Make(Validations.Label, I18n.Error)
 // all the validations and input components will just work, and the creation of a new form is trivial
 module Form = MakeForm(Values)
 
+module Validations = Validations.Make(Values)
+
+open Formidable.Validations
+
 open Validations
 
 // Validations can be defined in an other module, and re-used easily

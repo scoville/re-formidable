@@ -38,6 +38,17 @@ The second one is used only internally when composing validations`)
     }
 
   type t<'values, 'value, 'error, 'label> = (kind<'label>, Validator.t<'values, 'value, 'error>)
+
+  module Make = (
+    Values: {
+      type t
+    },
+    Label: {
+      type t
+    },
+  ) => {
+    let make = (~name, validator): t<Values.t, _, _, Label.t> => (#name(name), validator)
+  }
 }
 
 type t<'values, 'value, 'error, 'label> = (
