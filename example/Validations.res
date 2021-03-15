@@ -10,8 +10,8 @@ let required = (
   #name(#required),
   ({Validator.Args.label: label, value}) =>
     switch value {
-    | "" => #error(#error(("required", label)))
-    | _ => #ok(value)
+    | "" => Error(#error(("required", label)))
+    | _ => Ok(value)
     },
 )
 
@@ -21,9 +21,9 @@ let email = (
   #name(#email),
   ({Validator.Args.label: label, value}) =>
     if emailRegEx->Js.Re.test_(value) {
-      #ok(value)
+      Ok(value)
     } else {
-      #error(#error(("email", label)))
+      Error(#error(("email", label)))
     },
 )
 
@@ -31,8 +31,8 @@ let equals = lens => (
   #name(#equals),
   ({Validator.Args.label: label, value, values}) =>
     if lens.Optic.Lens.get(values) == value {
-      #ok(value)
+      Ok(value)
     } else {
-      #error(#error(("equals", label)))
+      Error(#error(("equals", label)))
     },
 )

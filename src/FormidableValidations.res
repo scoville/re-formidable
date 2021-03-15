@@ -7,7 +7,7 @@ module Strategy = {
 
 @ocaml.doc(`The value returned by a validator, ok or error`)
 module Value = {
-  type t<'value, 'error> = [#ok('value) | #error('error)]
+  type t<'value, 'error> = result<'value, 'error>
 }
 
 @ocaml.doc(`The validator is the function that performs the validation`)
@@ -49,8 +49,8 @@ let compose = ((names, validator), (names', validator')) => (
   names->Description.resolveKind->Js.Array2.concat(names'->Description.resolveKind)->#names,
   field =>
     switch validator(field) {
-    | #ok(_) => validator'(field)
-    | #error(_) as error => error
+    | Ok(_) => validator'(field)
+    | Error(_) as error => error
     },
 )
 
