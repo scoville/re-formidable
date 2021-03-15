@@ -27,7 +27,7 @@ describe("Formidable", () => {
     test("Change focus status - focus", () => {
       let app = renderApp()
 
-      act(() => app->email.input->FireEvent.focus)
+      act(() => app->email.input->FireEvent.focusIn)
 
       email.expectToMatchSnapshot(app)
     })
@@ -37,9 +37,9 @@ describe("Formidable", () => {
       () => {
         let app = renderApp()
 
-        act(() => app->email.input->FireEvent.focus)
+        act(() => app->email.input->FireEvent.focusIn)
 
-        act(() => app->email.input->FireEvent.blur)
+        act(() => app->email.input->FireEvent.focusOut)
 
         email.expectToMatchSnapshot(app)
       },
@@ -50,13 +50,13 @@ describe("Formidable", () => {
       done => {
         let app = renderApp()
 
-        act(() => app->email.input->FireEvent.focus)
+        act(() => app->email.input->FireEvent.focusIn)
 
         act(() =>
           app->email.input->FireEvent.input(~eventInit={"target": {"value": existingEmail}})
         )
 
-        act(() => app->email.input->FireEvent.blur)
+        act(() => app->email.input->FireEvent.focusOut)
 
         Js.Global.setTimeout(() => done(email.expectToMatchSnapshot(app)), 300)->ignore
       },
@@ -65,9 +65,9 @@ describe("Formidable", () => {
     testAsync("Change focus status and trigger required error - focus then blur", done => {
       let app = renderApp()
 
-      act(() => app->email.input->FireEvent.focus)
+      act(() => app->email.input->FireEvent.focusIn)
 
-      act(() => app->email.input->FireEvent.blur)
+      act(() => app->email.input->FireEvent.focusOut)
 
       Js.Global.setTimeout(() => done(email.expectToMatchSnapshot(app)), 300)->ignore
     })
@@ -149,7 +149,7 @@ describe("Formidable", () => {
 
       let app = renderApp()
 
-      act(() => app->email.input->FireEvent.focus)
+      act(() => app->email.input->FireEvent.focusIn)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -167,7 +167,7 @@ describe("Formidable", () => {
 
       let app = renderApp(~onFocus, ())
 
-      act(() => app->email.input->FireEvent.blur)
+      act(() => app->email.input->FireEvent.focusOut)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -177,7 +177,7 @@ describe("Formidable", () => {
 
       let app = renderApp(~onFocus, ())
 
-      act(() => app->email.input->FireEvent.focus)
+      act(() => app->email.input->FireEvent.focusIn)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -187,7 +187,7 @@ describe("Formidable", () => {
 
       let app = renderApp()
 
-      act(() => app->email.input->FireEvent.blur)
+      act(() => app->email.input->FireEvent.focusOut)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -205,7 +205,7 @@ describe("Formidable", () => {
 
       let app = renderApp(~onBlur, ())
 
-      act(() => app->email.input->FireEvent.focus)
+      act(() => app->email.input->FireEvent.focusIn)
 
       Handler.expectToMatchSnapshot(spy)
     })
@@ -215,7 +215,7 @@ describe("Formidable", () => {
 
       let app = renderApp(~onBlur, ())
 
-      act(() => app->email.input->FireEvent.blur)
+      act(() => app->email.input->FireEvent.focusOut)
 
       Handler.expectToMatchSnapshot(spy)
     })

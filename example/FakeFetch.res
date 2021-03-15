@@ -21,7 +21,7 @@ let useFetch = (~path) => {
       setResponse(_ => Loading)
 
       let data = switch path->Js.String2.split("/")->Js.Array2.filter(pathPart => pathPart != "") {
-      | ["email", "exists"] when body->Js.Dict.get("email") == Some("already@exists.com") =>
+      | ["email", "exists"] if body->Js.Dict.get("email") == Some("already@exists.com") =>
         Error(#alreadyExists)
       | ["email", "exists"] => Data("Ok")
       | _ => Error(#notFound)

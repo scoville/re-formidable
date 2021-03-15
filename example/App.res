@@ -97,7 +97,7 @@ module Child = {
           // Async check email uniqueness
           checkEmailUniqueness(~body=Js.Dict.fromArray([("email", email)]))
 
-          onInputBlur->Option.forEach(onInputBlur => onInputBlur(event))
+          onInputBlur->Belt.Option.forEach(onInputBlur => onInputBlur(event))
         }}
         onChange=?onInputChange
         onFocus=?onInputFocus
@@ -146,14 +146,14 @@ module Child = {
         {field => <TextInput field />}
       </Form.Field>
       {hobbies
-      ->Array.mapWithIndex((index, _hobby) =>
+      ->Belt.Array.mapWithIndex((index, _hobby) =>
         <Form.Field
-          key={index->Int.toString}
-          name={`hobby-${index->Int.toString}`}
+          key={index->Belt.Int.toString}
+          name={`hobby-${index->Belt.Int.toString}`}
           onBlur=?onInputBlur
           onChange=?onInputChange
           onFocus=?onInputFocus
-          label={`Hobby - ${(index + 1)->Int.toString}`}
+          label={`Hobby - ${(index + 1)->Belt.Int.toString}`}
           lens={Values.hobbies->Optic.Lens.compose(Optic.Common.Array.indexExn(index))}>
           {field => <TextInput field />}
         </Form.Field>
@@ -177,7 +177,7 @@ let make = (~onInputBlur=?, ~onInputChange=?, ~onInputFocus=?) =>
   <Form.Provider>
     <Form.Consumer>
       {({values}) =>
-        `Email address' length: ${Int.toString(String.length(values.email))}`->React.string}
+        `Email address' length: ${Belt.Int.toString(String.length(values.email))}`->React.string}
     </Form.Consumer>
     <Child ?onInputBlur ?onInputChange ?onInputFocus />
   </Form.Provider>

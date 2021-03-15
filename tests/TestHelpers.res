@@ -46,15 +46,15 @@ module Input = {
   let make = name => {
     let input = getByTestId(~matcher=#Str(name))
 
-    let focusState = result => result->input->Dom.Element.nextElementSibling->Option.getExn
+    let focusState = result => result->input->Dom.Element.nextElementSibling->Belt.Option.getExn
 
-    let status = result => result->focusState->Dom.Element.nextElementSibling->Option.getExn
+    let status = result => result->focusState->Dom.Element.nextElementSibling->Belt.Option.getExn
 
     let expectToMatchSnapshot = app =>
       {
         AssertionResult.focusState: app->focusState->Dom.Element.textContent,
         status: app->status->Dom.Element.textContent,
-        value: app->input->Dom.Element.asHtmlElement->Option.getExn->Dom.HtmlElement.value,
+        value: app->input->Dom.Element.asHtmlElement->Belt.Option.getExn->Dom.HtmlElement.value,
       }
       ->expect
       ->toMatchSnapshot
