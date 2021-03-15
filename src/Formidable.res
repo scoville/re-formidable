@@ -27,7 +27,7 @@ module States = {
       type t<'error> = [#pristine | #valid | #touched | #errors(array<'error>)]
     }
 
-    @bs.deriving(accessors)
+    @deriving(accessors)
     type t<'values, 'error> = {
       status: Status.t<'error>,
       validate: (option<Validations.Strategy.t>, 'values) => Status.t<'error>,
@@ -75,20 +75,22 @@ module States = {
       ]
     }
 
-    let isPristine = fields => fields->Map.String.every(_ => Field.isPristine)
+    let isPristine = fields => fields->Belt.Map.String.every(_ => Field.isPristine)
 
-    let isValid = fields => fields->Map.String.every(_ => Field.isValid)
+    let isValid = fields => fields->Belt.Map.String.every(_ => Field.isValid)
 
-    let isTouched = fields => fields->Map.String.some(_ => Field.isTouched)
+    let isTouched = fields => fields->Belt.Map.String.some(_ => Field.isTouched)
 
-    let hasErrors = fields => fields->Map.String.some(_ => Field.hasErrors)
+    let hasErrors = fields => fields->Belt.Map.String.some(_ => Field.hasErrors)
 
     let getErrors = fields =>
-      fields->Map.String.reduce([], (acc, _, field) =>
-        field->Field.getErrors->Option.mapWithDefault(acc, errors => acc->Js.Array2.concat(errors))
+      fields->Belt.Map.String.reduce([], (acc, _, field) =>
+        field
+        ->Field.getErrors
+        ->Belt.Option.mapWithDefault(acc, errors => acc->Js.Array2.concat(errors))
       )
 
-    let reset = fields => fields->Map.String.map(Field.reset)
+    let reset = fields => fields->Belt.Map.String.map(Field.reset)
   }
 }
 
@@ -113,7 +115,7 @@ module Props = {
 
 module Context = {
   type state<'values, 'error> = {
-    fields: Map.String.t<States.Field.t<'values, 'error>>,
+    fields: Belt.Map.String.t<States.Field.t<'values, 'error>>,
     isDisabled: bool,
     values: 'values,
   }
@@ -122,7 +124,7 @@ module Context = {
     removeField: string => unit,
     setIsDisabled: bool => unit,
     setField: (string, States.Field.t<'values, 'error>) => unit,
-    setFields: Map.String.t<States.Field.t<'values, 'error>> => unit,
+    setFields: Belt.Map.String.t<States.Field.t<'values, 'error>> => unit,
     setValues: 'values => unit,
     updateField: (
       string,
@@ -232,7 +234,7 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
 
   let context = React.createContext((
     {
-      Context.fields: Map.String.empty,
+      Context.fields: Belt.Map.String.empty,
       isDisabled: false,
       values: Values.init,
     },
@@ -270,7 +272,7 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
       updateFieldStatus(name, status => {
         switch status {
         | #touched | #pristine | #valid => #errors([error])
-        | #errors(errors) when errors->Js.Array2.some(Error.eq(error)) => status
+        | #errors(errors) if errors->Js.Array2.some(Error.eq(error)) => status
         | #errors(errors) => errors->Js.Array2.concat([error])->#errors
         }
       })
@@ -288,7 +290,7 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
       )
 
     let submit = _event => {
-      let fields = fields->Map.String.map(({States.Field.validate: validate} as field) => {
+      let fields = fields->Belt.Map.String.map(({States.Field.validate: validate} as field) => {
         ...field,
         status: validate(None, values),
       })
@@ -344,17 +346,17 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
 
       let modifiers = {
         Context.removeField: name =>
-          setState(state => {...state, fields: state.fields->Map.String.remove(name)}),
+          setState(state => {...state, fields: state.fields->Belt.Map.String.remove(name)}),
         setIsDisabled: isDisabled => setState(state => {...state, isDisabled: isDisabled}),
         setField: (name, field) =>
-          setState(state => {...state, fields: state.fields->Map.String.set(name, field)}),
+          setState(state => {...state, fields: state.fields->Belt.Map.String.set(name, field)}),
         setFields: fields => setState(state => {...state, fields: fields}),
         setValues: values => setState(state => {...state, values: values}),
         updateField: (name, f) =>
           setState(state => {
             ...state,
-            fields: state.fields->Map.String.update(name, field =>
-              field->Option.map(field => f(field))
+            fields: state.fields->Belt.Map.String.update(name, field =>
+              field->Belt.Option.map(field => f(field))
             ),
           }),
       }
@@ -392,21 +394,21 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
     ) => {
       let ({Context.isDisabled: isDisabled, fields, values}, modifiers) = React.useContext(context)
 
-      let field = fields->Map.String.get(name)
+      let field = fields->Belt.Map.String.get(name)
       let children = children
       let value = Optic.Lens.get(lens, values)
       let (isFocused, setIsFocused) = React.useState(() => false)
 
       let validationNames =
-        validations->Option.mapWithDefault([], validations =>
+        validations->Belt.Option.mapWithDefault([], validations =>
           validations->ArrayExtra.flatMap(Validations.getNames)
         )
 
       let hasValidation = name => validationNames->Js.Array2.some(ValidationLabel.eq(name))
 
       let validate = React.useCallback1((validationContext, values) =>
-        validations->Option.mapWithDefault(#valid, validations =>
-          switch validations->Array.keepMap(((strategy, (_, validator))) =>
+        validations->Belt.Option.mapWithDefault(#valid, validations =>
+          switch validations->Belt.Array.keepMap(((strategy, (_, validator))) =>
             if Validations.shouldValidate(~context=validationContext, ~strategy) {
               switch validator({
                 Validations.Validator.Args.label: errorLabel->OptionExtra.or(label),
@@ -437,7 +439,7 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
       let onBlur = event => {
         setIsFocused(_ => false)
 
-        onBlur->Option.forEach(onBlur => onBlur(event))
+        onBlur->Belt.Option.forEach(onBlur => onBlur(event))
 
         validateAndUpdate(Some(#onBlur), values)
       }
@@ -445,9 +447,9 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
       let onFocus = event => {
         setIsFocused(_ => true)
 
-        onFocus->Option.forEach(onFocus => onFocus(event))
+        onFocus->Belt.Option.forEach(onFocus => onFocus(event))
 
-        if field->Option.mapWithDefault(false, States.Field.isPristine) {
+        if field->Belt.Option.mapWithDefault(false, States.Field.isPristine) {
           modifiers.updateField(name, field => {...field, status: #touched})
         }
       }
@@ -457,7 +459,7 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
 
         let values = Optic.Lens.set(lens, value, values)
 
-        onChange'->Option.forEach(onChange' => onChange'(Optic.Lens.get(lens, values)))
+        onChange'->Belt.Option.forEach(onChange' => onChange'(Optic.Lens.get(lens, values)))
 
         modifiers.setValues(values)
 
@@ -467,14 +469,15 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
       let setStatus = status => modifiers.updateField(name, field => {...field, status: status})
 
       React.useEffect0(() => {
-        if Option.isNone(field) {
+        if Belt.Option.isNone(field) {
           modifiers.setField(name, {States.Field.status: #pristine, validate: validate})
         }
+
         None
       })
 
       children({
-        Props.Field.isDisabled: isDisabled || disable->Option.getWithDefault(false),
+        Props.Field.isDisabled: isDisabled || disable->Belt.Option.getWithDefault(false),
         isFocused: isFocused,
         label: label,
         name: name,
@@ -482,7 +485,7 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
         onChange: onChange,
         onFocus: onFocus,
         setStatus: setStatus,
-        status: field->Option.mapWithDefault(#pristine, States.Field.status),
+        status: field->Belt.Option.mapWithDefault(#pristine, States.Field.status),
         validate: () => validateAndUpdate(None, values),
         hasValidation: hasValidation,
         value: value,
@@ -502,7 +505,7 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
     ~children,
   ) => {
     let (_, {Context.setIsDisabled: setIsDisabled}) = React.useContext(context)
-    let disable = disable->Option.getWithDefault(false)
+    let disable = disable->Belt.Option.getWithDefault(false)
 
     React.useEffect1(() => {
       setIsDisabled(disable)
@@ -512,7 +515,7 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
     <form
       ?className
       ?action
-      method=?{method_->Option.map(FormMethod.toString)}
+      method=?{method_->Belt.Option.map(FormMethod.toString)}
       onSubmit={Events.handle(~preventDefault?, ~stopPropagation?, event =>
         switch onSubmit {
         | None => ignore()

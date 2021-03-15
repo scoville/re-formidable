@@ -36,7 +36,7 @@ module Status = {
 module Label = {
   @react.component
   let make = (~required, ~value) =>
-    value->Option.mapWithDefault(React.null, value =>
+    value->Belt.Option.mapWithDefault(React.null, value =>
       <div>
         {value->React.string}
         {required

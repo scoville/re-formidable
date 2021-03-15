@@ -15,7 +15,7 @@ let eventTargetValue = event =>
   ->ReactEvent.Form.target
   ->(target => target["value"])
   ->Js.Nullable.toOption
-  ->Option.getWithDefault("")
+  ->Belt.Option.getWithDefault("")
 
 let handleWithValue = (~preventDefault=false, ~stopPropagation=false, f, event) => {
   event->handle_(~preventDefault, ~stopPropagation)
