@@ -417,8 +417,8 @@ module Make = (ValidationLabel: ValidationLabel, Error: Error, Values: Values): 
                 value: Optic.Lens.get(lens, values),
                 values: values,
               }) {
-              | #ok(_) => None
-              | #error(error) => Some(error)
+              | Ok(_) => None
+              | Error(error) => Some(error)
               }
             } else {
               None
